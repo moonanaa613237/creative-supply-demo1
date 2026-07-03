@@ -1,0 +1,3759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创意供给与标准化拆解平台 (CMP Demo)</title>
+    <style>
+        /* ================= 全局 SaaS 规范 UI ================= */
+        :root {
+            --bg-body: #f8fafc;
+            --surface: #ffffff;
+            --primary: #4f46e5;       /* 靛蓝主色 */
+            --primary-hover: #4338ca;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #059669;
+            --warning: #d97706;
+            --highlight-bg: #eef2ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-body); color: var(--text-main); padding-bottom: 80px;}
+        
+        /* 顶部向导进度条 */
+        .app-header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; padding: 16px 28px; display: flex; justify-content: flex-start; align-items: center; }
+        .logo-area { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .logo-area span { background: var(--primary); color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px;}
+
+        /* 页面容器 */
+        .page-view { display: none; max-width: 1360px; margin: 32px auto; padding: 0 20px; animation: fadeIn 0.3s ease; }
+        .page-view.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 通用按钮 */
+        .btn { background: var(--surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s; font-weight: 500;}
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: white; border-color: var(--success);}
+        .btn-ghost { background: #f8fafc; color: var(--text-main); }
+
+        /* ================= 页面 1：创意供给池 ================= */
+        .page-flow-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
+        .page-flow-strip .flow-list { display: flex; gap: 10px; flex-wrap: wrap; }
+        .page-flow-strip .flow-item { width: auto; min-width: 180px; }
+        .p1-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 20px; align-items: start; }
+        .source-sidebar { display: grid; gap: 14px; height: fit-content; position: sticky; top: 88px; }
+        .sidebar-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .sidebar-title { font-size: 12px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; font-weight: 700; }
+        .collection-entry-card { border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; padding: 12px; display: grid; gap: 8px; cursor: pointer; transition: all 0.2s; }
+        .collection-entry-card:hover { border-color: #c7d2fe; box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+        .collection-entry-card.active { border-color: var(--primary); background: var(--highlight-bg); }
+        .collection-entry-card strong { font-size: 14px; color: var(--text-main); }
+        .collection-entry-card small { display: block; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 4px; }
+        .collection-entry-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .flow-list { display: grid; gap: 8px; }
+        .flow-item { width: 100%; border: 1px solid var(--border); background: #f8fafc; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; text-align: left; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; }
+        .flow-item:hover { border-color: #cbd5e1; background: #fff; color: var(--text-main); }
+        .flow-item .step-num { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 11px; flex: 0 0 24px; }
+        .flow-item.active { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); }
+        .flow-item.active .step-num { border-color: var(--primary); background: var(--primary); color: white; }
+        .flow-item.passed .step-num { border-color: var(--success); background: var(--success); color: white; }
+        .source-menu li { list-style: none; padding: 14px 14px; margin-bottom: 6px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; transition: all 0.2s; }
+        .source-menu li:hover { background: #f1f5f9; }
+        .source-menu li.active { background: var(--highlight-bg); color: var(--primary); font-weight: 600; }
+        .source-menu li small { display: block; margin-top: 4px; font-size: 12px; color: #94a3b8; font-weight: 400; line-height: 1.45; }
+        .menu-count { min-width: 34px; height: 24px; padding: 0 8px; border-radius: 999px; background: #f1f5f9; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+        .source-menu li.active .menu-count { background: rgba(79, 70, 229, 0.12); color: var(--primary); }
+        .asset-shortcut-list { display: grid; gap: 10px; }
+        .asset-shortcut-card { border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; padding: 12px; display: grid; gap: 10px; cursor: pointer; transition: all 0.2s; }
+        .asset-shortcut-card:hover { border-color: #c7d2fe; box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+        .asset-shortcut-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .asset-shortcut-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .asset-shortcut-top strong { font-size: 14px; color: var(--text-main); }
+        .asset-shortcut-top span { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .asset-shortcut-card.all .asset-shortcut-top span { background: #e2e8f0; color: var(--text-main); }
+        .asset-shortcut-card.brief .asset-shortcut-top span { background: #eef2ff; color: var(--primary); }
+        .asset-shortcut-card.script .asset-shortcut-top span { background: #ecfeff; color: #0f766e; }
+        .browse-panel { display: grid; gap: 18px; }
+        .browse-toolbar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; gap: 16px; }
+        .toolbar-search-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+        .toolbar-content-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+        .toolbar-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .toolbar-input, .toolbar-select { min-height: 40px; border: 1px solid var(--border); border-radius: 8px; padding: 0 14px; font-size: 14px; color: var(--text-main); background: var(--surface); }
+        .toolbar-input { min-width: 260px; width: 100%; }
+        .selection-hint { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+        .page-one-state-dropdown { position: relative; width: fit-content; margin-left: auto; }
+        .state-dropdown-trigger { min-height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; background: var(--surface); color: var(--text-main); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
+        .state-dropdown-trigger:hover { border-color: #cbd5e1; }
+        .state-dropdown-trigger.open { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); }
+        .state-dropdown-label { min-width: 68px; text-align: left; }
+        .state-dropdown-caret { transition: transform 0.2s ease; }
+        .state-dropdown-trigger.open .state-dropdown-caret { transform: rotate(180deg); }
+        .state-dropdown-panel { position: absolute; top: calc(100% + 10px); right: 0; z-index: 40; min-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 24px 40px rgba(15, 23, 42, 0.12); display: none; gap: 12px; }
+        .state-dropdown-panel.open { display: grid; }
+        .page-one-state-group { display: grid; gap: 8px; }
+        .page-one-state-label { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+        .page-one-state-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .state-pill { min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: #f8fafc; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .state-pill:hover { border-color: #cbd5e1; color: var(--text-main); }
+        .state-pill.active { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); }
+        .state-pill.include.active { border-color: #10b981; background: #ecfdf5; color: #047857; }
+        .state-pill.exclude.active { border-color: #f97316; background: #fff7ed; color: #c2410c; }
+        .summary-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .summary-copy h3 { font-size: 17px; margin-bottom: 6px; }
+        .summary-copy p { font-size: 13px; line-height: 1.6; color: var(--text-muted); }
+        .summary-actions, .filter-pills, .metric-pills, .material-meta-row, .context-chips, .part-detail-footer { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filter-pills { margin-top: 12px; }
+        .filter-pill, .metric-pill, .context-chip, .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); background: #f8fafc; color: var(--text-muted); }
+        .filter-pill strong, .context-chip strong { color: var(--text-main); font-weight: 600; }
+        .metric-pill { background: #eef2ff; border-color: #c7d2fe; color: var(--primary); font-weight: 600; }
+        .status-pill.supported { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .status-pill.watch { background: #fff7ed; color: #b45309; border-color: #fed7aa; }
+        .status-pill.blocked { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+        .material-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-width: 360px; }
+        .count-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+        .count-card strong { display: block; font-size: 20px; color: var(--text-main); margin-bottom: 4px; }
+        .count-card span { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+
+        .material-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+        .video-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.2s; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; }
+        .video-card:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08); }
+        .video-card.supported { border-color: #c7d2fe; }
+        .video-card.watch-only { border-color: #fed7aa; }
+        .video-card.blocked-card { border-color: #fecaca; background: #fffdfd; }
+        .video-card.selected { border-color: var(--primary); box-shadow: 0 14px 30px rgba(79, 70, 229, 0.14); }
+
+        .video-thumb { position: relative; aspect-ratio: 16 / 9; background: #0f172a; overflow: hidden; cursor: pointer; display: flex; align-items: flex-end; }
+        .video-thumb video, .thumb-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .thumb-center { position: absolute; inset: 0; display: grid; place-items: center; color: white; font-size: 44px; text-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); }
+        .thumb-overlay { position: absolute; inset: 0; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.72)); }
+        .thumb-badge-row { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .thumb-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .thumb-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: white; font-size: 11px; font-weight: 700; backdrop-filter: blur(6px); }
+        .thumb-badge.emphasis { background: rgba(79, 70, 229, 0.94); }
+        .thumb-bottom { display: flex; justify-content: space-between; gap: 12px; align-items: end; color: white; font-size: 12px; line-height: 1.5; }
+        .thumb-bottom strong { display: block; font-size: 14px; margin-bottom: 4px; }
+        .thumb-bottom span { color: rgba(255, 255, 255, 0.82); }
+
+        .video-card-body { padding: 16px; display: grid; gap: 14px; flex: 1; }
+        .card-topline { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+        .card-topline h3 { font-size: 15px; color: var(--text-main); font-family: monospace; line-height: 1.55; overflow-wrap: anywhere; }
+        .select-toggle-btn { border: 1px solid var(--border); background: #fff; color: var(--text-muted); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+        .select-toggle-btn.active { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); font-weight: 700; }
+        .card-summary { font-size: 13px; line-height: 1.7; color: var(--text-muted); }
+        .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .metric-grid div { padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid var(--border); }
+        .metric-label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .metric-value { display: block; font-size: 14px; color: var(--text-main); font-weight: 600; line-height: 1.4; }
+        .badge { background: #f1f5f9; color: var(--text-muted); font-size: 12px; padding: 4px 8px; border-radius: 4px; font-weight: 500;}
+        .badge.gold { background: #fef3c7; color: #b45309; border: 1px solid #fde68a;}
+        .badge-favorite { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .risk-note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+        .card-actions { display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap; }
+        .card-actions .btn { flex: 1 1 calc(50% - 10px); display: inline-flex; align-items: center; justify-content: center; }
+        .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+        .empty-state { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 34px 28px; text-align: center; color: var(--text-muted); line-height: 1.8; }
+        .empty-state strong { color: var(--text-main); display: block; font-size: 16px; margin-bottom: 6px; }
+
+        .viewer-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.82); z-index: 300; display: none; padding: 30px 24px; }
+        .viewer-modal.open { display: block; }
+        body.viewer-open { overflow: hidden; }
+        .viewer-shell { position: relative; max-width: 1240px; height: calc(100vh - 60px); margin: 0 auto; display: grid; grid-template-columns: 78px minmax(0, 1fr) 340px; gap: 18px; align-items: stretch; }
+        .viewer-nav-col { border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; background: rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: white; }
+        .viewer-nav-btn { width: 46px; height: 46px; border-radius: 999px; border: none; background: white; color: #0f172a; font-size: 20px; font-weight: 700; cursor: pointer; }
+        .viewer-position { font-size: 13px; color: #cbd5e1; text-align: center; line-height: 1.6; }
+        .viewer-stage { background: #020617; border-radius: 22px; overflow: hidden; position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; }
+        .viewer-stage video, .viewer-placeholder { width: 100%; height: 100%; object-fit: contain; }
+        .viewer-placeholder { display: grid; place-items: center; color: white; text-align: center; font-size: 28px; font-weight: 700; padding: 24px; }
+        .viewer-close { position: absolute; top: 18px; right: 18px; z-index: 5; width: 44px; height: 44px; border: none; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: white; font-size: 24px; cursor: pointer; }
+        .viewer-meta { border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 22px; background: rgba(255, 255, 255, 0.08); color: white; padding: 20px; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+        .viewer-meta h3 { font-size: 18px; line-height: 1.45; margin-bottom: 12px; overflow-wrap: anywhere; }
+        .viewer-meta p { color: #cbd5e1; font-size: 14px; line-height: 1.75; }
+        .viewer-meta-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+        .viewer-meta-item { padding: 10px 12px; border-radius: 12px; background: rgba(15, 23, 42, 0.42); border: 1px solid rgba(255, 255, 255, 0.08); overflow-wrap: anywhere; }
+        .viewer-meta-item span { display: block; margin-bottom: 6px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; }
+        .viewer-meta-item strong { display: block; font-size: 16px; line-height: 1.3; color: white; font-weight: 700; }
+        .viewer-metric-title { color: #cbd5e1; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+        .viewer-metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .viewer-metric-grid .viewer-meta-item.wide { grid-column: 1 / -1; }
+        .viewer-section-stack { display: flex; flex-direction: column; gap: 12px; }
+        .viewer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+        .viewer-actions .btn { display: inline-flex; align-items: center; justify-content: center; }
+        .viewer-actions .btn.btn-primary { grid-column: 1 / -1; }
+        .viewer-favorite-state { margin-top: 18px; display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; background: rgba(254, 243, 199, 0.16); color: #fde68a; font-size: 12px; font-weight: 600; }
+        .brief-modal { position: fixed; inset: 0; z-index: 360; background: rgba(15, 23, 42, 0.78); display: none; padding: 24px; }
+        .brief-modal.open { display: grid; place-items: center; }
+        .brief-dialog { width: min(820px, 100%); max-height: calc(100vh - 48px); overflow: auto; background: var(--surface); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28); padding: 24px; }
+        .brief-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+        .brief-dialog-title h3 { font-size: 20px; color: var(--text-main); margin-bottom: 6px; }
+        .brief-dialog-title p { color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+        .brief-entry-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .asset-preview-section { display: grid; gap: 10px; margin-bottom: 18px; }
+        .asset-preview-section h4 { font-size: 14px; color: var(--text-main); }
+        .asset-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, 180px); gap: 12px; justify-content: flex-start; margin-bottom: 18px; }
+        .asset-preview-grid:last-child { margin-bottom: 0; }
+        .asset-preview-card { width: 180px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #fff; cursor: pointer; }
+        .asset-preview-card .mini-stage { aspect-ratio: 16 / 9; background: #0f172a; position: relative; display: flex; align-items: center; justify-content: center; color: white; }
+        .asset-preview-card video, .asset-preview-card .thumb-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .asset-preview-card .mini-stage span { position: relative; z-index: 1; font-size: 30px; text-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .asset-preview-copy { padding: 10px 12px; display: grid; gap: 4px; }
+        .asset-preview-copy strong { font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+        .asset-preview-copy span { color: var(--text-muted); font-size: 11px; line-height: 1.4; }
+        .brief-badge-btn { border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; cursor: pointer; }
+        .brief-content-stack { display: grid; gap: 14px; }
+        .brief-content-block { border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: #f8fafc; }
+        .brief-content-block h4 { font-size: 15px; color: var(--text-main); margin-bottom: 10px; }
+        .brief-group-list { display: grid; gap: 10px; }
+        .brief-group-item { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: start; font-size: 14px; line-height: 1.7; }
+        .brief-group-item strong { color: var(--text-muted); font-weight: 700; }
+        .brief-group-item span { color: var(--text-main); }
+        .brief-copy { font-size: 14px; line-height: 1.8; color: var(--text-main); white-space: pre-wrap; }
+        .brief-section { display: grid; gap: 14px; }
+        .brief-section-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .brief-record { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: #fff; }
+        .brief-record-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .brief-record-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+        .brief-record-head strong { font-size: 14px; color: var(--text-main); }
+        .detail-input { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; font-size: 14px; color: var(--text-main); background: #f8fafc; }
+        .part-step-hint { border: 1px dashed #c7d2fe; border-radius: 12px; background: #f8fafc; padding: 22px; display: grid; gap: 12px; justify-items: start; color: var(--text-muted); line-height: 1.7; }
+        .part-step-hint strong { color: var(--text-main); font-size: 16px; }
+        .share-copy-stack { display: grid; gap: 12px; }
+        .share-copy-stack label { font-size: 13px; color: var(--text-muted); }
+        .share-link-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+        .share-input { width: 100%; min-height: 42px; border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; font-size: 13px; color: var(--text-main); background: #f8fafc; }
+        .section-split-title { font-size: 13px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.04em; }
+        .toast { position: fixed; top: 24px; right: 24px; z-index: 500; min-width: 180px; max-width: 320px; padding: 12px 14px; border-radius: 12px; background: #0f172a; color: white; box-shadow: 0 18px 30px rgba(15, 23, 42, 0.22); font-size: 13px; line-height: 1.5; opacity: 0; transform: translateY(-8px); pointer-events: none; transition: all 0.22s ease; }
+        .toast.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 1200px) {
+            .material-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 1100px) {
+            .viewer-shell { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; height: auto; max-height: calc(100vh - 40px); }
+            .viewer-nav-col { flex-direction: row; padding: 12px; }
+            .viewer-meta { max-height: 36vh; overflow: auto; }
+        }
+
+        @media (max-width: 960px) {
+            .p1-layout { grid-template-columns: 1fr; }
+            .source-sidebar { position: static; }
+            .material-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .toolbar-input { min-width: 0; }
+            .summary-bar, .context-bar { flex-direction: column; align-items: stretch; }
+            .material-counts, .part-support-note { grid-template-columns: 1fr; min-width: 0; }
+            .p2-layout { grid-template-columns: 1fr; }
+            .brief-dialog-header { flex-direction: column; align-items: stretch; }
+            .brief-group-item { grid-template-columns: 1fr; gap: 4px; }
+        }
+
+        @media (max-width: 640px) {
+            .material-grid { grid-template-columns: 1fr; }
+            .viewer-modal { padding: 16px; }
+            .viewer-shell { max-height: calc(100vh - 32px); }
+        }
+
+        /* ================= 页面 2：选择可用部分 ================= */
+        .p2-layout { display: grid; grid-template-columns: 460px 1fr; gap: 32px; }
+        .context-bar { background: var(--surface); border: 1px solid var(--border); padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+        .context-copy small { color: var(--text-muted); display: block; margin-bottom: 6px; }
+        .context-copy h4 { font-family: monospace; margin-bottom: 10px; font-size: 16px; }
+        .multi-context-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .multi-context-chip { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 12px; border-radius: 12px; border: 1px solid #c7d2fe; background: #eef2ff; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; min-width: 164px; text-align: left; }
+        .multi-context-chip span { font-size: 11px; color: var(--text-muted); font-weight: 500; line-height: 1.4; }
+        .multi-context-chip.active { border-color: var(--primary); box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.12) inset; }
+        
+        /* 模拟播放器 */
+        .mock-player { background: #0f172a; border-radius: 10px; height: 500px; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);}
+        .player-tag { align-self: flex-start; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 20px; font-size: 12px;}
+        .player-center { text-align: center;}
+        .player-sub { background: rgba(0,0,0,0.7); padding: 10px; border-radius: 6px; font-size: 13px; line-height: 1.4; margin-bottom: 10px;}
+        .progress-mock { width: 100%; display: flex; gap: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; padding: 3px; margin-top: 12px; }
+        .progress-segment { border: none; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.16); cursor: pointer; transition: all 0.2s; }
+        .progress-segment:hover { background: rgba(255,255,255,0.28); }
+        .progress-segment.active { background: #6d5efc; box-shadow: 0 0 0 1px rgba(255,255,255,0.14) inset; }
+
+        /* 可用零件选择盘 */
+        .part-picker-area { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px;}
+        .part-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 20px 0; }
+        .part-btn { border: 2px solid var(--border); background: #f8fafc; padding: 14px; border-radius: 8px; text-align: center; font-weight: 600; cursor: not-allowed; color: #94a3b8; transition: all 0.2s;}
+        
+        /* 开放点击的HOOK */
+        .part-btn.active-target { cursor: pointer; color: var(--text-main); background: var(--surface); border-color: var(--primary); box-shadow: 0 4px 12px rgba(79,70,229,0.12);}
+        .part-btn.current { background: var(--highlight-bg); border-color: var(--primary); color: var(--primary); }
+
+        /* Hook详情抽屉（右侧展开） */
+        .hook-detail-box { border: 1px solid var(--primary); background: var(--highlight-bg); border-radius: 8px; padding: 20px; display: block; animation: fadeIn 0.3s ease;}
+        .detail-block-stack { display: grid; gap: 14px; }
+        .detail-block { border: 1px solid #c7d2fe; background: var(--surface); border-radius: 12px; padding: 16px; }
+        .detail-block h4 { font-size: 15px; margin-bottom: 12px; color: var(--text-main); }
+        .tag-group-list { display: grid; gap: 14px; }
+        .tag-group { display: grid; gap: 8px; }
+        .tag-group-title { font-size: 13px; color: var(--text-muted); font-weight: 700; }
+        .tag-options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .tag-option { border: 1px solid var(--border); background: #f8fafc; color: var(--text-main); border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .tag-option.active { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); font-weight: 600; }
+        .detail-textarea { width: 100%; min-height: 110px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: var(--text-main); background: #f8fafc; }
+
+        /* ================= 页面 3：资产库 ================= */
+        .asset-library-shell { display: grid; gap: 18px; }
+        .asset-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; display: flex; justify-content: space-between; gap: 18px; align-items: end; }
+        .asset-hero h2 { font-size: 24px; margin-bottom: 8px; }
+        .asset-hero p { color: var(--text-muted); font-size: 14px; line-height: 1.7; }
+        .asset-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 180px)); gap: 12px; }
+        .asset-summary-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+        .asset-summary-card strong { display: block; font-size: 22px; margin-bottom: 6px; }
+        .asset-summary-card span { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+        .asset-toolbar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .asset-library-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+        .asset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); display: grid; gap: 14px; }
+        .asset-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+        .asset-card-head h3 { font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; }
+        .asset-select-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8fafc; color: var(--text-main); font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; }
+        .asset-select-toggle input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+        .asset-select-toggle.active { border-color: var(--primary); background: var(--highlight-bg); color: var(--primary); }
+        .asset-badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .asset-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .asset-pill.brief { background: #eef2ff; color: var(--primary); }
+        .asset-pill.script { background: #ecfeff; color: #0f766e; }
+        .asset-pill.reference { background: #fff7ed; color: #c2410c; }
+        .asset-meta-copy { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+        .asset-snippet { border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; padding: 14px; font-size: 13px; color: var(--text-main); line-height: 1.7; min-height: 84px; }
+        .asset-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .asset-actions .btn { flex: 1 1 calc(50% - 10px); display: inline-flex; align-items: center; justify-content: center; }
+        .asset-time { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+        .link-script-list { display: grid; gap: 12px; margin-top: 8px; }
+        .link-script-item { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: #f8fafc; display: grid; gap: 10px; }
+        .link-script-item-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+        .link-script-item h4 { font-size: 15px; line-height: 1.5; }
+        .linked-chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .linked-chip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: #ecfeff; color: #0f766e; font-size: 12px; font-weight: 700; }
+        .reference-chip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: #fff7ed; color: #c2410c; font-size: 12px; font-weight: 700; }
+        .asset-subsection { display: grid; gap: 8px; }
+        .asset-subsection-title { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+        .script-create-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+        .script-create-panel { border: 1px solid var(--border); border-radius: 14px; background: #f8fafc; padding: 16px; display: grid; gap: 12px; }
+        .script-create-panel h4 { font-size: 15px; color: var(--text-main); }
+        .script-create-list { display: grid; gap: 10px; max-height: 420px; overflow: auto; padding-right: 2px; }
+        .script-create-item { border: 1px solid var(--border); border-radius: 12px; background: #fff; padding: 14px; display: grid; gap: 8px; cursor: pointer; transition: all 0.2s; }
+        .script-create-item:hover { border-color: #c7d2fe; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.08); }
+        .script-create-item.active { border-color: var(--primary); background: var(--highlight-bg); }
+        .script-create-item h5 { font-size: 14px; line-height: 1.5; color: var(--text-main); overflow-wrap: anywhere; }
+        .script-create-item p { font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+        .script-create-form { display: grid; gap: 14px; }
+        .script-create-selected { border: 1px solid #c7d2fe; background: #fff; border-radius: 14px; padding: 14px; display: grid; gap: 12px; }
+        .script-create-selected-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+        .script-create-selected-head h4 { font-size: 15px; line-height: 1.5; }
+        .script-create-selected-head p { color: var(--text-muted); font-size: 12px; line-height: 1.6; margin-top: 4px; }
+        .script-create-empty { border: 1px dashed #c7d2fe; background: #f8fafc; border-radius: 14px; padding: 18px; color: var(--text-muted); line-height: 1.8; }
+        .script-create-footer { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo-area"><span>AI</span>创意标准化拆解中台</div>
+    </header>
+
+    <main class="page-view active" id="page-1">
+        <div class="page-flow-strip">
+            <div>
+                <div class="sidebar-title" style="margin-bottom:8px;">流程入口</div>
+                <div class="selection-hint">按步骤切换供给池、拆解页和资产库。</div>
+            </div>
+            <div class="flow-list flow-list-horizontal">
+                <button class="flow-item active" id="nav-step-1" onclick="goToPage(1)">
+                    <span class="step-num">1</span>
+                    <span>创意供给池</span>
+                </button>
+                <button class="flow-item" id="nav-step-2" onclick="goToPage(2)">
+                    <span class="step-num">2</span>
+                    <span>选择视频可用部分</span>
+                </button>
+                <button class="flow-item" id="nav-step-3" onclick="goToPage(3)">
+                    <span class="step-num">3</span>
+                    <span>资产库</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="p1-layout">
+            <aside class="source-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">收藏资源库</div>
+                    <div class="collection-entry-card" id="favorite-collection-entry" role="button" tabindex="0" onclick="openFavoriteLibrary()">
+                        <div class="collection-entry-top">
+                            <strong>收藏素材</strong>
+                            <span class="menu-count" id="favorite-source-count">0</span>
+                        </div>
+                        <small>全部来源 / 分来源大类 / 分来源子类</small>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">供给来源</div>
+                    <ul class="source-menu">
+                        <li class="active" data-source="internal" onclick="switchSource('internal', this)">
+                            <div>内部历史迭代<small>跑量素材 / 跌量迭代</small></div>
+                            <span class="menu-count">3</span>
+                        </li>
+                        <li data-source="3rd" onclick="switchSource('3rd', this)">
+                            <div>三方平台<small>竞品 TOP / 跨行业 TOP / 关键词搜索</small></div>
+                            <span class="menu-count">3</span>
+                        </li>
+                        <li data-source="social" onclick="switchSource('social', this)">
+                            <div>社媒热点<small>确定性热点 / 突发性热点</small></div>
+                            <span class="menu-count">3</span>
+                        </li>
+                        <li data-source="other" onclick="switchSource('other', this)">
+                            <div>其他途径<small>插件补充 / 外部归档</small></div>
+                            <span class="menu-count">2</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">资产库入口</div>
+                    <div class="asset-shortcut-list">
+                        <div class="asset-shortcut-card all" role="button" tabindex="0" onclick="openAssetHub('all')">
+                            <div class="asset-shortcut-top">
+                                <strong>全部资产库</strong>
+                                <span id="all-hub-count">0</span>
+                            </div>
+                        </div>
+                        <div class="asset-shortcut-card brief" role="button" tabindex="0" onclick="openAssetHub('brief')">
+                            <div class="asset-shortcut-top">
+                                <strong>brief 资产库</strong>
+                                <span id="brief-hub-count">0</span>
+                            </div>
+                        </div>
+                        <div class="asset-shortcut-card script" role="button" tabindex="0" onclick="openAssetHub('script')">
+                            <div class="asset-shortcut-top">
+                                <strong>脚本资产库</strong>
+                                <span id="script-hub-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="browse-panel">
+                <div class="browse-toolbar">
+                    <div class="toolbar-search-row">
+                        <input class="toolbar-input" id="search-input" type="text" placeholder="搜索素材名" oninput="renderSourceMaterials()">
+                    </div>
+
+                    <div class="toolbar-content-row">
+                        <div class="toolbar-controls">
+                            <select class="toolbar-select" id="business-filter" onchange="renderSourceMaterials()">
+                                <option value="all">全部业务线</option>
+                            </select>
+                            <select class="toolbar-select" id="subcategory-filter" onchange="renderSourceMaterials()">
+                                <option value="all">全部来源子类</option>
+                            </select>
+                            <select class="toolbar-select" id="platform-filter" onchange="renderSourceMaterials()">
+                                <option value="all">全部渠道</option>
+                            </select>
+                            <select class="toolbar-select" id="favorite-source-filter" onchange="renderSourceMaterials()" style="display:none;">
+                                <option value="all">全部来源大类</option>
+                            </select>
+                            <select class="toolbar-select" id="page-one-sort-filter" onchange="setPageOneSort(this.value)">
+                                <option value="default">默认排序</option>
+                            </select>
+                            <span class="selection-hint" id="batch-selection-hint">已选 0 条视频</span>
+                            <button class="btn" onclick="clearMaterialSelection()">清空多选</button>
+                            <button class="btn btn-primary" onclick="startBatchDecompose()">多选进入同一条拆解</button>
+                        </div>
+                        <div class="page-one-state-dropdown" id="page-one-state-dropdown">
+                            <button type="button" class="state-dropdown-trigger" id="page-one-state-trigger" onclick="togglePageOneStateDropdown(event)">
+                                <span class="state-dropdown-label">全部状态</span>
+                                <span class="state-dropdown-caret">▾</span>
+                            </button>
+                            <div class="state-dropdown-panel" id="page-one-state-panel">
+                                <div class="page-one-state-group">
+                                    <span class="page-one-state-label">已收藏</span>
+                                    <div class="page-one-state-actions">
+                                        <button type="button" class="state-pill active" data-filter-key="favorite" data-filter-state="all" onclick="setPageOneTriStateFilter('favorite', 'all')">全部</button>
+                                        <button type="button" class="state-pill include" data-filter-key="favorite" data-filter-state="include" onclick="setPageOneTriStateFilter('favorite', 'include')">仅包含</button>
+                                        <button type="button" class="state-pill exclude" data-filter-key="favorite" data-filter-state="exclude" onclick="setPageOneTriStateFilter('favorite', 'exclude')">排除</button>
+                                    </div>
+                                </div>
+                                <div class="page-one-state-group">
+                                    <span class="page-one-state-label">已产出 brief</span>
+                                    <div class="page-one-state-actions">
+                                        <button type="button" class="state-pill active" data-filter-key="brief" data-filter-state="all" onclick="setPageOneTriStateFilter('brief', 'all')">全部</button>
+                                        <button type="button" class="state-pill include" data-filter-key="brief" data-filter-state="include" onclick="setPageOneTriStateFilter('brief', 'include')">仅包含</button>
+                                        <button type="button" class="state-pill exclude" data-filter-key="brief" data-filter-state="exclude" onclick="setPageOneTriStateFilter('brief', 'exclude')">排除</button>
+                                    </div>
+                                </div>
+                                <div class="page-one-state-group">
+                                    <span class="page-one-state-label">已产出脚本</span>
+                                    <div class="page-one-state-actions">
+                                        <button type="button" class="state-pill active" data-filter-key="script" data-filter-state="all" onclick="setPageOneTriStateFilter('script', 'all')">全部</button>
+                                        <button type="button" class="state-pill include" data-filter-key="script" data-filter-state="include" onclick="setPageOneTriStateFilter('script', 'include')">仅包含</button>
+                                        <button type="button" class="state-pill exclude" data-filter-key="script" data-filter-state="exclude" onclick="setPageOneTriStateFilter('script', 'exclude')">排除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="material-grid" id="material-grid"></div>
+            </section>
+        </div>
+    </main>
+
+    <div class="viewer-modal" id="viewer-modal" onclick="closeViewer(event)">
+        <div class="viewer-shell" onclick="event.stopPropagation()">
+            <button class="viewer-close" onclick="closeViewer()">×</button>
+
+            <div class="viewer-nav-col">
+                <button class="viewer-nav-btn" onclick="navigateViewer(-1)">▲</button>
+                <div class="viewer-position" id="viewer-position">1 / 1</div>
+                <button class="viewer-nav-btn" onclick="navigateViewer(1)">▼</button>
+            </div>
+
+            <div class="viewer-stage" id="viewer-stage"></div>
+            <div class="viewer-meta" id="viewer-meta"></div>
+        </div>
+    </div>
+
+    <main class="page-view" id="page-2">
+        <div class="context-bar">
+            <div class="context-copy">
+                <h4 id="selected-material-name">US_260604_HQZ_05_TFTED_TKnoicon_ZQ17_en.mp4</h4>
+                <div class="context-chips" id="selected-material-context"></div>
+                <div class="multi-context-list" id="selected-material-list"></div>
+            </div>
+            <div class="brief-entry-row">
+                <button class="btn" id="view-asset-btn" onclick="openAssetModal()" style="display:none;">查看brief</button>
+                <button class="btn" id="add-reference-btn" onclick="openReferenceVideoModal()" style="display:none;">添加参考视频</button>
+                <button class="btn" id="link-script-btn" onclick="openLinkScriptModal()" style="display:none;">关联资源库已有资产</button>
+                <button class="btn" onclick="goToPage(1)">重新选片</button>
+            </div>
+        </div>
+
+        <div class="p2-layout">
+            <div class="mock-player">
+                <div class="player-tag" id="player-tag">正在播放: 00:01 / 00:15</div>
+                <div class="player-center">
+                    <div style="font-size: 56px; opacity: 0.8; margin-bottom: 16px;">▶</div>
+                    <span id="player-scene" style="color: #94a3b8; font-size: 14px;">[ 视频画面：科技博主手持iPhone出镜 ]</span>
+                </div>
+                <div>
+                    <div class="player-sub" id="player-subtitle">
+                        <strong>实时语音转文字 (ASR):</strong><br>
+                        "Apple just secretly dropped a mobile app that lets you clean your phone automatically for free..."
+                    </div>
+                    <div class="progress-mock" id="progress-track"></div>
+                </div>
+            </div>
+
+            <div class="part-picker-area">
+                <h3 id="part-picker-title">请选择拆解模块</h3>
+
+                <div class="part-grid" id="part-grid">
+                    <div class="part-btn active-target" id="part-hook" onclick="selectPart('hook')">HOOK</div>
+                    <div class="part-btn active-target" id="part-demo" onclick="selectPart('demo')">DEMO</div>
+                    <div class="part-btn active-target" id="part-cta" onclick="selectPart('cta')">CTA</div>
+                    <div class="part-btn active-target" id="part-voiceover" onclick="selectPart('voiceover')">口播文案</div>
+                    <div class="part-btn active-target" id="part-structure" onclick="selectPart('structure')">整体结构</div>
+                    <div class="part-btn active-target" id="part-frame" onclick="selectPart('frame')">静帧图片</div>
+                </div>
+
+                <div class="hook-detail-box" id="hook-detail-panel"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="brief-modal" id="brief-modal" onclick="closeBriefModal(event)">
+        <div class="brief-dialog" onclick="event.stopPropagation()">
+                <div class="brief-dialog-header">
+                    <div class="brief-dialog-title">
+                        <h3>已保存内容</h3>
+                        <p>这里展示当前素材下已保存的 brief 或脚本。</p>
+                    </div>
+                    <button class="btn" onclick="closeBriefModal()">关闭</button>
+                </div>
+
+            <div id="brief-modal-preview" class="asset-preview-section"></div>
+            <div id="brief-modal-body" class="brief-content-stack"></div>
+        </div>
+    </div>
+
+    <div class="brief-modal" id="link-script-modal" onclick="closeLinkScriptModal(event)">
+        <div class="brief-dialog" onclick="event.stopPropagation()">
+            <div class="brief-dialog-header">
+                <div class="brief-dialog-title">
+                    <h3 id="link-script-title">关联资源库已有资产</h3>
+                    <p id="link-script-desc">把当前选中的视频直接关联到资源库里的已有资产，避免重复生成。</p>
+                </div>
+                <button class="btn" onclick="closeLinkScriptModal()">关闭</button>
+            </div>
+            <input class="toolbar-input" id="link-script-search-input" type="text" placeholder="搜索资产名称 / 模块 / 来源 / 平台" oninput="renderLinkScriptModalList()">
+            <div id="link-script-body" class="link-script-list"></div>
+        </div>
+    </div>
+
+    <div class="brief-modal" id="reference-video-modal" onclick="closeReferenceVideoModal(event)">
+        <div class="brief-dialog" onclick="event.stopPropagation()">
+            <div class="brief-dialog-header">
+                <div class="brief-dialog-title">
+                    <h3>添加参考视频</h3>
+                    <p>把当前选中的视频批次补充到已有 brief 或脚本下，作为参考视频使用。</p>
+                </div>
+                <button class="btn" onclick="closeReferenceVideoModal()">关闭</button>
+            </div>
+            <div id="reference-video-body" class="link-script-list"></div>
+        </div>
+    </div>
+
+    <div class="brief-modal" id="share-modal" onclick="closeShareModal(event)">
+        <div class="brief-dialog" style="width:min(560px,100%);" onclick="event.stopPropagation()">
+            <div class="brief-dialog-header">
+                <div class="brief-dialog-title">
+                    <h3>下发查看</h3>
+                    <p>选择接收人后，把 brief 或脚本下发到对方的 `@我的内容` 中。</p>
+                </div>
+                <button class="btn" onclick="closeShareModal()">关闭</button>
+            </div>
+            <div id="share-modal-body" class="share-copy-stack"></div>
+        </div>
+    </div>
+
+    <div class="brief-modal" id="translation-modal" onclick="closeTranslationModal(event)">
+        <div class="brief-dialog" style="width:min(620px,100%);" onclick="event.stopPropagation()">
+            <div class="brief-dialog-header">
+                <div class="brief-dialog-title">
+                    <h3>口播文案翻译</h3>
+                    <p>查看当前模块的原始口播和翻译内容。</p>
+                </div>
+                <button class="btn" onclick="closeTranslationModal()">关闭</button>
+            </div>
+            <div id="translation-modal-body" class="brief-content-stack"></div>
+        </div>
+    </div>
+
+    <div class="brief-modal" id="direct-script-modal" onclick="closeDirectScriptModal(event)">
+        <div class="brief-dialog" style="width:min(1180px,100%);" onclick="event.stopPropagation()">
+            <div class="brief-dialog-header">
+                <div class="brief-dialog-title">
+                    <h3>直接创建脚本</h3>
+                    <p>先选择一个 brief，再按「整体结构」脚本的字段填写并创建脚本。</p>
+                </div>
+                <button class="btn" onclick="closeDirectScriptModal()">关闭</button>
+            </div>
+            <div class="toolbar-search-row" style="margin-bottom:14px;">
+                <input class="toolbar-input" id="direct-script-search-input" type="text" placeholder="搜索 brief 名称 / 模块 / 来源 / 平台" oninput="renderDirectScriptModal()">
+            </div>
+            <div id="direct-script-modal-body" class="script-create-layout"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+
+    <main class="page-view" id="page-3">
+        <div class="asset-library-shell">
+            <section class="asset-hero">
+                <div>
+                    <h2>资产库</h2>
+                </div>
+                <div style="display:grid; gap:12px; justify-items:end;">
+                    <button class="btn btn-primary" onclick="openDirectScriptModal()">直接创建脚本</button>
+                    <button class="btn" onclick="goToPage(1)">返回供给池</button>
+                </div>
+            </section>
+
+            <section class="asset-toolbar">
+                <input class="toolbar-input" id="asset-search-input" type="text" placeholder="搜索素材名 / 模块 / 来源 / 平台" oninput="renderAssetLibrary()">
+                <select class="toolbar-select" id="asset-type-filter" onchange="renderAssetLibrary()">
+                    <option value="all">全部资产</option>
+                    <option value="brief">仅看brief</option>
+                    <option value="script">仅看脚本</option>
+                </select>
+                <select class="toolbar-select" id="asset-module-filter" onchange="renderAssetLibrary()">
+                    <option value="all">全部模块</option>
+                </select>
+                <select class="toolbar-select" id="asset-view-user-filter" onchange="renderAssetLibrary()"></select>
+                <select class="toolbar-select" id="asset-delivery-filter" onchange="renderAssetLibrary()">
+                    <option value="all">全部内容</option>
+                    <option value="mentioned">@我的内容</option>
+                    <option value="delivered">已下发</option>
+                    <option value="undelivered">未下发</option>
+                </select>
+                <span class="selection-hint" id="asset-selection-hint">已选 0 条资产</span>
+                <button class="btn" onclick="clearAssetSelection()">清空资产多选</button>
+                <button class="btn btn-primary" onclick="openShareModalForSelected()">多选下发查看</button>
+            </section>
+
+            <section class="asset-library-list" id="asset-library-list"></section>
+        </div>
+    </main>
+
+    <script>
+        const sourceMaterials = {
+            internal: [
+                {
+                    id: 'internal-1',
+                    title: 'US_260604_HQZ_05_TFTED_TKnoicon_ZQ17_en.mp4',
+                    businessLine: 'TK线',
+                    platform: '一灯平台',
+                    sourceLabel: '内部历史迭代',
+                    sourceDetail: '历史跑量',
+                    business: 'TK 清理产品线',
+                    audience: '欧美 55+ 中老年用户',
+                    summary: '实拍 + 录屏介绍手机清理软件，前 3 秒具备明显 HOOK 价值。',
+                    sellPoint: '快速扫描、一键清理',
+                    tags: ['HOOK 候选', '苹果元素', '科技博主'],
+                    hasVideo: true,
+                    videoSrc: 'demo-input/US_260604_HQZ_05_TFTED_TKnoicon_ZQ17_en.mp4',
+                    accent: 'linear-gradient(135deg, #4338ca 0%, #0f172a 58%, #22d3ee 100%)',
+                    canDecompose: true,
+                    previewNote: '当前 demo 唯一支持完整拆解的样例素材。',
+                    metrics: [
+                        ['消耗', '$31.2K'],
+                        ['CTR', '2.7%'],
+                        ['CVR', '4.1%'],
+                        ['D0总转化成本', '$6.4']
+                    ]
+                },
+                {
+                    id: 'internal-2',
+                    title: 'US_260530_BeforeAfter_Cleaner_v4.mp4',
+                    businessLine: 'TK线',
+                    platform: '内部归档',
+                    sourceLabel: '内部历史迭代',
+                    sourceDetail: '跑量回溯',
+                    business: 'TK 清理产品线',
+                    audience: '欧美 35+',
+                    summary: '以清理前后容量差异作为主卖点，偏结果前置表达。',
+                    sellPoint: '容量对比、结果前置',
+                    tags: ['结果前置', '容量对比'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #0f766e 0%, #115e59 46%, #0f172a 100%)',
+                    canDecompose: false,
+                    previewNote: '当前仅做浏览，不进入后续 SOP。',
+                    metrics: [
+                        ['消耗', '$12.8K'],
+                        ['CTR', '2.1%'],
+                        ['CVR', '3.6%'],
+                        ['D0总转化成本', '$7.2']
+                    ]
+                },
+                {
+                    id: 'internal-3',
+                    title: 'UK_260601_ScanFast_Teacher_v2.mp4',
+                    businessLine: 'HH线',
+                    platform: '内部归档',
+                    sourceLabel: '内部历史迭代',
+                    sourceDetail: '跌量待迭代',
+                    business: 'TK 清理产品线',
+                    audience: '欧美 45+',
+                    summary: '老师形象讲解手机卡顿与清理方案，偏口播驱动。',
+                    sellPoint: '操作简单、扫描速度快',
+                    tags: ['口播感', '教程型'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #312e81 0%, #1d4ed8 50%, #0f172a 100%)',
+                    canDecompose: false,
+                    previewNote: '后续可以扩展成口播文案或 CTA 拆解样例。',
+                    metrics: [
+                        ['消耗', '$9.6K'],
+                        ['CTR', '1.9%'],
+                        ['CVR', '3.2%'],
+                        ['D0总转化成本', '$7.9']
+                    ]
+                }
+            ],
+            '3rd': [
+                {
+                    id: '3rd-1',
+                    title: 'US_260611_Competitor_Top_01.mp4',
+                    businessLine: 'TK线',
+                    platform: 'Meta Ad Library',
+                    sourceLabel: '三方平台',
+                    sourceDetail: '竞品 TOP',
+                    business: '清理类竞品',
+                    audience: '欧美 35-60',
+                    summary: '竞品用极短镜头密度强调清理速度，适合观察前 3 秒节奏。',
+                    sellPoint: '清理速度、结果对比',
+                    tags: ['竞品', '快节奏'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #7c3aed 0%, #4338ca 45%, #0f172a 100%)',
+                    canDecompose: false,
+                    previewNote: '暂无本地视频，使用占位卡模拟浏览。',
+                    metrics: [
+                        ['投放天数', '11天'],
+                        ['展示估值', '1.8M'],
+                        ['人气值', '92'],
+                        ['热度', '高热增长']
+                    ]
+                },
+                {
+                    id: '3rd-2',
+                    title: 'BR_260520_ASMR_Clean_Mud_v2.mp4',
+                    businessLine: 'HH线',
+                    platform: 'TikTok',
+                    sourceLabel: '三方平台',
+                    sourceDetail: '跨行业 TOP',
+                    business: '解压清洁内容',
+                    audience: '年轻泛人群',
+                    summary: '虽然不是同业务，但镜头爽感强，适合作为节奏与构图参考。',
+                    sellPoint: '视觉吸引、爽感切入',
+                    tags: ['跨行业', '爽感'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #ea580c 0%, #f59e0b 55%, #1e293b 100%)',
+                    canDecompose: false,
+                    previewNote: '更适合做灵感参考，不直接进入当前 HOOK SOP。',
+                    metrics: [
+                        ['投放天数', '7天'],
+                        ['展示估值', '890K'],
+                        ['人气值', '76'],
+                        ['热度', '持续上升']
+                    ]
+                },
+                {
+                    id: '3rd-3',
+                    title: 'US_260608_StoragePain_Search_03.mp4',
+                    businessLine: 'TK线',
+                    platform: 'YouTube Search',
+                    sourceLabel: '三方平台',
+                    sourceDetail: '关键词搜索',
+                    business: 'Storage full 相关内容',
+                    audience: 'iPhone 用户',
+                    summary: '搜索词聚焦 “storage full”，适合挖掘痛点型开头表达。',
+                    sellPoint: '痛点切入',
+                    tags: ['关键词', '痛点'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 52%, #0f172a 100%)',
+                    canDecompose: false,
+                    previewNote: '适合作为标题与开头句的补充来源。',
+                    metrics: [
+                        ['投放天数', '5天'],
+                        ['展示估值', '620K'],
+                        ['人气值', '68'],
+                        ['热度', '稳定']
+                    ]
+                }
+            ],
+            social: [
+                {
+                    id: 'social-1',
+                    title: 'US_0704_Holiday_StorageRush_01.mp4',
+                    businessLine: 'TK线',
+                    platform: 'Instagram Reels',
+                    sourceLabel: '社媒热点',
+                    sourceDetail: '确定性热点',
+                    business: '节日清理需求',
+                    audience: '欧美家庭用户',
+                    summary: '节日前拍照和视频暴增，天然能承接手机存储焦虑。',
+                    sellPoint: '节日节点、容量焦虑',
+                    tags: ['节假日', '热点'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #dc2626 0%, #f97316 55%, #111827 100%)',
+                    canDecompose: false,
+                    previewNote: '适合做热点型供给，不作为当前拆解样例。',
+                    metrics: [
+                        ['投放天数', '4天'],
+                        ['展示估值', '540K'],
+                        ['人气值', '74'],
+                        ['热度', '节点拉升']
+                    ]
+                },
+                {
+                    id: 'social-2',
+                    title: 'Meme_iPhoneStorage_Clean_Trend_02.mp4',
+                    businessLine: 'HH线',
+                    platform: 'TikTok',
+                    sourceLabel: '社媒热点',
+                    sourceDetail: '突发热点',
+                    business: '热梗混剪',
+                    audience: '泛社媒用户',
+                    summary: '借热梗开头吸睛，再转到手机清理场景，适合后续扩展测试。',
+                    sellPoint: '热梗吸睛',
+                    tags: ['热梗', '反差'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #db2777 0%, #8b5cf6 55%, #111827 100%)',
+                    canDecompose: false,
+                    previewNote: '当前页面以浏览为主，后续可扩展热点路线。',
+                    metrics: [
+                        ['投放天数', '3天'],
+                        ['展示估值', '480K'],
+                        ['人气值', '71'],
+                        ['热度', '热点波动']
+                    ]
+                },
+                {
+                    id: 'social-3',
+                    title: 'AppleStorageNewsClip_Trend_06.mp4',
+                    businessLine: 'HH线',
+                    platform: 'X / News Clip',
+                    sourceLabel: '社媒热点',
+                    sourceDetail: '突发话题',
+                    business: '资讯混剪',
+                    audience: '资讯关注人群',
+                    summary: '资讯播报口吻较强，更适合做信任背书类文案启发。',
+                    sellPoint: '资讯口吻、信任感',
+                    tags: ['资讯感', '背书'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #111827 100%)',
+                    canDecompose: false,
+                    previewNote: '适合作为口播表达参考。',
+                    metrics: [
+                        ['投放天数', '6天'],
+                        ['展示估值', '710K'],
+                        ['人气值', '65'],
+                        ['热度', '平稳']
+                    ]
+                }
+            ],
+            other: [
+                {
+                    id: 'other-1',
+                    title: 'Plugin_Submission_Creator_0621.mp4',
+                    businessLine: 'TK线',
+                    platform: '插件补充供给库',
+                    sourceLabel: '其他途径',
+                    sourceDetail: '插件扩充',
+                    business: '创作者自投递',
+                    audience: '待评估',
+                    summary: '由插件采集的创作者线索，适合补充特殊人设和镜头风格。',
+                    sellPoint: '人设多样性',
+                    tags: ['插件供给', '创作者'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 52%, #111827 100%)',
+                    canDecompose: false,
+                    previewNote: '后续可以接成自动入库来源。',
+                    metrics: [
+                        ['投放天数', '8天'],
+                        ['展示估值', '460K'],
+                        ['人气值', '58'],
+                        ['热度', '待验证']
+                    ]
+                },
+                {
+                    id: 'other-2',
+                    title: 'Agency_Archive_OneTap_Review_04.mp4',
+                    businessLine: 'HH线',
+                    platform: '外部归档',
+                    sourceLabel: '其他途径',
+                    sourceDetail: '外部归档',
+                    business: '代理商参考',
+                    audience: '待评估',
+                    summary: '来自外部协作方的归档样例，适合做补充浏览。',
+                    sellPoint: '外部视角',
+                    tags: ['归档', '外部参考'],
+                    hasVideo: false,
+                    accent: 'linear-gradient(135deg, #334155 0%, #475569 55%, #111827 100%)',
+                    canDecompose: false,
+                    previewNote: '当前仅用于浏览与参考。',
+                    metrics: [
+                        ['投放天数', '9天'],
+                        ['展示估值', '390K'],
+                        ['人气值', '49'],
+                        ['热度', '低频']
+                    ]
+                }
+            ]
+        };
+
+        let activeSource = 'internal';
+        let selectedMaterialId = 'internal-1';
+        let selectedMaterialIds = ['internal-1'];
+        let viewerMaterials = [];
+        let viewerIndex = 0;
+        let touchStartY = 0;
+        let viewerSwitchLock = 0;
+        let activePart = null;
+        let savedBrief = null;
+        let toastTimer = null;
+        let briefModalContext = null;
+        let partDetailReady = false;
+        let shareModalContext = null;
+        let linkScriptModalContext = null;
+        let directScriptModalContext = null;
+
+        const favoriteState = Object.create(null);
+        const briefState = Object.create(null);
+        const scriptState = Object.create(null);
+        const deliveryState = Object.create(null);
+        const pageOneStateFilters = {
+            favorite: 'all',
+            brief: 'all',
+            script: 'all'
+        };
+        let pageOneSortMode = 'default';
+        const mockUsers = [
+            { id: 'nana', name: 'Nana' },
+            { id: 'amy', name: 'Amy' },
+            { id: 'leo', name: 'Leo' },
+            { id: 'mia', name: 'Mia' }
+        ];
+        const currentOperatorId = 'nana';
+        let currentViewerUserId = 'amy';
+        let selectedAssetIds = [];
+        const partOrder = ['hook', 'demo', 'cta', 'voiceover', 'structure', 'frame'];
+        const partDefinitions = {
+            hook: {
+                label: 'HOOK',
+                buttonLabel: 'HOOK',
+                assetType: 'brief',
+                time: '0s ~ 3s',
+                scene: '[ 视频画面：科技博主手持 iPhone 直接出镜 ]',
+                subtitle: '"Apple just secretly dropped a mobile app that lets you clean your phone automatically for free..."',
+                translation: '苹果刚刚悄悄上线了一个手机应用，可以帮你自动清理手机，而且还是免费的。',
+                weight: 3,
+                tagTitle: 'HOOK标签',
+                tagGroups: [
+                    ['创意方向', ['信任背书', '结果前置', '痛点切入', '效率承诺']],
+                    ['画面资产', ['苹果元素', '科技博主人设', '录屏操作', '正脸出镜']],
+                    ['表达方式', ['口播开场', '利益点前置', '快节奏切镜', '对比感']]
+                ],
+                defaultSelectedTags: ['信任背书', '苹果元素', '口播开场'],
+                textFields: [
+                    {
+                        key: 'usageGuide',
+                        label: '画面描述',
+                        placeholder: '输入这一段画面描述',
+                        defaultValue: '参考视频人物、做苹果员工口播，人物形象和背景需要有日常生活感。'
+                    },
+                    {
+                        key: 'voiceContent',
+                        label: '口播内容',
+                        placeholder: '输入这一段口播内容',
+                        defaultValue: '口播内容：强调苹果官方视角、利益点先说，保留“自动清理、免费、一键完成”的表达节奏。'
+                    },
+                    {
+                        key: 'reuseLogic',
+                        label: '复用逻辑',
+                        placeholder: '输入这段内容的复用逻辑',
+                        defaultValue: '保留信任背书与苹果真实元素，替换原始人物脸部和具体口播文案，避免直接复刻原片。'
+                    }
+                ]
+            },
+            demo: {
+                label: 'DEMO',
+                buttonLabel: 'DEMO',
+                assetType: 'brief',
+                time: '4s ~ 10s',
+                scene: '[ 视频画面：清理前后容量对比 + 实时扫描演示 ]',
+                subtitle: '"Watch how the junk files disappear in seconds and the storage bar drops immediately..."',
+                translation: '看这些垃圾文件几秒内就被清掉，存储占用会立刻降下来。',
+                weight: 7,
+                tagTitle: 'DEMO标签',
+                tagGroups: [
+                    ['演示重点', ['前后对比', '数字跳变', '扫描进度', '结果即时可见']],
+                    ['镜头风格', ['录屏主导', '局部特写', '动效过渡', '速度感']],
+                    ['业务价值', ['容量释放', '垃圾清理', '一键完成', '节省时间']]
+                ],
+                defaultSelectedTags: ['前后对比', '数字跳变'],
+                textFields: [
+                    {
+                        key: 'usageGuide',
+                        label: '画面描述',
+                        placeholder: '输入这一段画面描述',
+                        defaultValue: '重点保留前后对比与数字变化，演示过程压缩到核心几步，减少无效停留镜头。'
+                    }
+                ]
+            },
+            cta: {
+                label: 'CTA',
+                buttonLabel: 'CTA',
+                assetType: 'brief',
+                time: '11s ~ 15s',
+                scene: '[ 视频画面：清理完成后引导点击下载，页面停留在商店页 ]',
+                subtitle: '"Tap here, run it once, and you can free up your iPhone in under a minute."',
+                translation: '点这里运行一次，不到一分钟就能帮你的 iPhone 释放空间。',
+                weight: 5,
+                tagTitle: 'CTA标签',
+                tagGroups: [
+                    ['召回动作', ['点击下载', '立即清理', '马上开始', '继续下一步']],
+                    ['利益收口', ['一分钟见效', '无需复杂设置', '一键完成', '释放空间']],
+                    ['结束方式', ['按钮召回', '口播召回', '结果复述', '画面停留']]
+                ],
+                defaultSelectedTags: ['点击下载', '一分钟见效'],
+                textFields: [
+                    {
+                        key: 'usageGuide',
+                        label: '画面描述',
+                        placeholder: '输入这一段画面描述',
+                        defaultValue: '召回动作要明确，结尾再次压缩利益点，尽量用一句话把“下载动作”和“效果承诺”说完整。'
+                    }
+                ]
+            },
+            voiceover: {
+                label: '口播文案',
+                buttonLabel: '口播文案',
+                assetType: 'brief',
+                time: '全片口播',
+                scene: '[ 口播拆解：关注利益点表达、句式节奏与投放口径 ]',
+                subtitle: '"Apple just secretly dropped..." 到结尾召回的整段口播均可作为衍生参考。',
+                translation: '当前模块已经是中文说明，可直接作为口播拆解参考。',
+                weight: 4,
+                tagTitle: '投放标签',
+                tagGroups: [
+                    ['投放目标', ['拉新投放', '起量放大', '素材补量', '老素材翻新']],
+                    ['文案特点', ['利益点直给', '结果先说', '步骤讲解', '效果承诺']],
+                    ['语气风格', ['科技分享', '教程口吻', '强利益口播', '快节奏输出']]
+                ],
+                defaultSelectedTags: ['拉新投放', '利益点直给', '科技分享'],
+                textFields: [
+                    {
+                        key: 'derivedCopy',
+                        label: '衍生文案',
+                        placeholder: '输入可直接延展给剪辑或文案的衍生口播',
+                        defaultValue: '前半句先把“自动清理、免费、一键完成”讲透，后半句补充结果承诺，保留强利益点开场。'
+                    },
+                    {
+                        key: 'reuseLogic',
+                        label: '复用逻辑',
+                        placeholder: '输入这段口播的复用逻辑',
+                        defaultValue: '保留先抛利益点再补过程说明的口播顺序，替换具体品牌词和原片原句，避免直接照搬。'
+                    }
+                ]
+            },
+            structure: {
+                label: '整体结构',
+                buttonLabel: '整体结构',
+                assetType: 'script',
+                time: '全片结构',
+                scene: '[ 结构拆解：关注开场、演示、召回的整体编排方式 ]',
+                subtitle: '当前模块聚焦整条视频的段落顺序、内容保留规则与替换方式。',
+                translation: '当前模块已经是中文说明，可直接查看整体结构与口播表达的整理结果。',
+                weight: 5,
+                tagTitle: '投放标签',
+                tagGroups: [
+                    ['投放目标', ['冷启动测试', '成熟素材翻新', '爆款结构复用', '品类迁移']],
+                    ['结构特点', ['利益点前置', '演示承接', '结尾强召回', '短链路转化']],
+                    ['节奏方式', ['三段式结构', '先结果后过程', '单卖点打透', '快节奏推进']]
+                ],
+                defaultSelectedTags: ['爆款结构复用', '利益点前置', '三段式结构'],
+                textFields: [
+                    {
+                        key: 'videoKeepReplace',
+                        label: '画面描述',
+                        placeholder: '输入视频画面描述',
+                        defaultValue: '保留“开头抛利益点 - 中段演示结果 - 结尾下载召回”的结构，替换原片人物、原 UI 细节和品牌露出。'
+                    },
+                    {
+                        key: 'voiceKeepReplace',
+                        label: '口播内容',
+                        placeholder: '输入口播内容描述',
+                        defaultValue: '保留每个段落的口播职责分工：开头卖点、中段解释、结尾召回；替换原片具体句式与原始品牌表达。'
+                    },
+                    {
+                        key: 'reuseLogic',
+                        label: '复用逻辑',
+                        placeholder: '输入整条结构的复用逻辑',
+                        defaultValue: '整条视频优先复用段落顺序与信息推进方式，不直接复刻原片镜头素材，改成同类业务可承接的新版内容。'
+                    }
+                ]
+            },
+            frame: {
+                label: '静帧图片',
+                buttonLabel: '静帧图片',
+                assetType: 'script',
+                time: '关键静帧',
+                scene: '[ 静帧拆解：关注封面帧、结果帧、对比帧中的视觉资产 ]',
+                subtitle: '当前模块聚焦可保留的静态画面元素，以及必须替换的视觉内容。',
+                translation: '当前模块已经是中文说明，可直接查看静帧中的视觉元素拆解。',
+                weight: 4,
+                tagTitle: '投放标签',
+                tagGroups: [
+                    ['投放目标', ['封面点击', '结果强化', '对比展示', '详情补帧']],
+                    ['图片角色', ['产品界面', '人物主体', '结果数字', '强调文案']],
+                    ['画面用途', ['封面主图', '视频插帧', '结果停留帧', '二创参考帧']]
+                ],
+                defaultSelectedTags: ['封面点击', '产品界面', '结果停留帧'],
+                textFields: [
+                    {
+                        key: 'keepReplace',
+                        label: '画面描述',
+                        placeholder: '输入静帧图片画面描述',
+                        defaultValue: '保留结果数字跳变、苹果系统真实质感和清理前后对比关系；替换原片人物脸、原始文案和过于接近竞品的 UI 细节。'
+                    }
+                ]
+            }
+        };
+        const partFormState = Object.fromEntries(
+            Object.entries(partDefinitions).map(([key, part]) => [
+                key,
+                {
+                    selectedTags: [...(part.defaultSelectedTags || [])],
+                    assetName: '',
+                    ...Object.fromEntries((part.textFields || []).map(field => [field.key, field.defaultValue || '']))
+                }
+            ])
+        );
+
+        const materialGridEl = document.getElementById('material-grid');
+        const viewerModalEl = document.getElementById('viewer-modal');
+        const viewerStageEl = document.getElementById('viewer-stage');
+        const viewerMetaEl = document.getElementById('viewer-meta');
+        const viewerPositionEl = document.getElementById('viewer-position');
+        const briefModalEl = document.getElementById('brief-modal');
+        const briefModalPreviewEl = document.getElementById('brief-modal-preview');
+        const briefModalBodyEl = document.getElementById('brief-modal-body');
+        const viewAssetBtnEl = document.getElementById('view-asset-btn');
+        const addReferenceBtnEl = document.getElementById('add-reference-btn');
+        const linkScriptBtnEl = document.getElementById('link-script-btn');
+        const linkScriptModalEl = document.getElementById('link-script-modal');
+        const linkScriptBodyEl = document.getElementById('link-script-body');
+        const linkScriptSearchInputEl = document.getElementById('link-script-search-input');
+        const referenceVideoModalEl = document.getElementById('reference-video-modal');
+        const referenceVideoBodyEl = document.getElementById('reference-video-body');
+        const shareModalEl = document.getElementById('share-modal');
+        const shareModalBodyEl = document.getElementById('share-modal-body');
+        const translationModalEl = document.getElementById('translation-modal');
+        const translationModalBodyEl = document.getElementById('translation-modal-body');
+        const directScriptModalEl = document.getElementById('direct-script-modal');
+        const directScriptModalBodyEl = document.getElementById('direct-script-modal-body');
+        const directScriptSearchInputEl = document.getElementById('direct-script-search-input');
+        const linkScriptTitleEl = document.getElementById('link-script-title');
+        const linkScriptDescEl = document.getElementById('link-script-desc');
+        const toastEl = document.getElementById('toast');
+        const businessFilterEl = document.getElementById('business-filter');
+        const subcategoryFilterEl = document.getElementById('subcategory-filter');
+        const platformFilterEl = document.getElementById('platform-filter');
+        const favoriteSourceFilterEl = document.getElementById('favorite-source-filter');
+        const pageOneSortFilterEl = document.getElementById('page-one-sort-filter');
+        const allHubCountEl = document.getElementById('all-hub-count');
+        const briefHubCountEl = document.getElementById('brief-hub-count');
+        const scriptHubCountEl = document.getElementById('script-hub-count');
+        const favoriteSourceCountEl = document.getElementById('favorite-source-count');
+        const favoriteCollectionEntryEl = document.getElementById('favorite-collection-entry');
+        const selectedMaterialContextEl = document.getElementById('selected-material-context');
+        const selectedMaterialListEl = document.getElementById('selected-material-list');
+        const batchSelectionHintEl = document.getElementById('batch-selection-hint');
+        const playerTagEl = document.getElementById('player-tag');
+        const playerSceneEl = document.getElementById('player-scene');
+        const playerSubtitleEl = document.getElementById('player-subtitle');
+        const progressTrackEl = document.getElementById('progress-track');
+        const hookDetailPanelEl = document.getElementById('hook-detail-panel');
+        const partPickerTitleEl = document.getElementById('part-picker-title');
+        const partGridEl = document.getElementById('part-grid');
+        const assetLibraryListEl = document.getElementById('asset-library-list');
+        const assetSearchInputEl = document.getElementById('asset-search-input');
+        const assetTypeFilterEl = document.getElementById('asset-type-filter');
+        const assetModuleFilterEl = document.getElementById('asset-module-filter');
+        const assetViewUserFilterEl = document.getElementById('asset-view-user-filter');
+        const assetDeliveryFilterEl = document.getElementById('asset-delivery-filter');
+        const assetSelectionHintEl = document.getElementById('asset-selection-hint');
+
+        // ================= 路由与页面控制 =================
+        function goToPage(page) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            updatePageNav(page);
+
+            if (page === 2) {
+                renderSelectedMaterialContext();
+                renderPartDetail();
+            }
+
+            if (page === 3) {
+                renderAssetLibrary();
+            }
+        }
+
+        function resetPageOneFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('business-filter').value = 'all';
+            document.getElementById('subcategory-filter').value = 'all';
+            document.getElementById('platform-filter').value = 'all';
+            if (favoriteSourceFilterEl) {
+                favoriteSourceFilterEl.value = 'all';
+            }
+            pageOneStateFilters.favorite = 'all';
+            pageOneStateFilters.brief = 'all';
+            pageOneStateFilters.script = 'all';
+            pageOneSortMode = 'default';
+            renderSourceMaterials();
+        }
+
+        function getPageOneSortOptions() {
+            if (activeSource === 'favorite') {
+                return [
+                    { value: 'default', label: '默认排序' },
+                    { value: 'displayValue', label: '展示估值' },
+                    { value: 'deliveryDays', label: '投放天数' },
+                    { value: 'popularity', label: '人气值' },
+                    { value: 'heat', label: '热度' },
+                    { value: 'cost', label: '消耗' },
+                    { value: 'ctr', label: 'CTR' },
+                    { value: 'cvr', label: 'CVR' },
+                    { value: 'd0Cost', label: 'D0总转化成本' }
+                ];
+            }
+
+            if (activeSource === '3rd') {
+                return [
+                    { value: 'default', label: '默认排序' },
+                    { value: 'displayValue', label: '展示估值' },
+                    { value: 'deliveryDays', label: '投放天数' },
+                    { value: 'popularity', label: '人气值' },
+                    { value: 'heat', label: '热度' }
+                ];
+            }
+
+            if (activeSource === 'internal') {
+                return [
+                    { value: 'default', label: '默认排序' },
+                    { value: 'cost', label: '消耗' },
+                    { value: 'ctr', label: 'CTR' },
+                    { value: 'cvr', label: 'CVR' },
+                    { value: 'd0Cost', label: 'D0总转化成本' }
+                ];
+            }
+
+            return [{ value: 'default', label: '默认排序' }];
+        }
+
+        function syncPageOneStateButtons() {
+            document.querySelectorAll('.state-pill').forEach(btn => {
+                const key = btn.getAttribute('data-filter-key');
+                const state = btn.getAttribute('data-filter-state');
+                if (!key || !state) {
+                    return;
+                }
+                btn.classList.toggle('active', pageOneStateFilters[key] === state);
+            });
+        }
+
+        function getPageOneSourceMaterials() {
+            if (activeSource === 'favorite') {
+                return Object.values(sourceMaterials).flat().filter(item => isFavorited(item.id));
+            }
+
+            return sourceMaterials[activeSource] || [];
+        }
+
+        function getFavoriteSourceCount() {
+            return Object.values(sourceMaterials).flat().filter(item => isFavorited(item.id)).length;
+        }
+
+        function refreshPageOneStateTrigger() {
+            const labelEl = document.querySelector('#page-one-state-trigger .state-dropdown-label');
+            if (!labelEl) {
+                return;
+            }
+
+            const hasActiveState = Object.values(pageOneStateFilters).some(value => value !== 'all');
+            labelEl.innerText = hasActiveState ? '已筛选' : '全部状态';
+        }
+
+        function openPageOneStateDropdown() {
+            const panel = document.getElementById('page-one-state-panel');
+            const trigger = document.getElementById('page-one-state-trigger');
+            if (!panel || !trigger) {
+                return;
+            }
+
+            panel.classList.add('open');
+            trigger.classList.add('open');
+        }
+
+        function closePageOneStateDropdown() {
+            const panel = document.getElementById('page-one-state-panel');
+            const trigger = document.getElementById('page-one-state-trigger');
+            if (!panel || !trigger) {
+                return;
+            }
+
+            panel.classList.remove('open');
+            trigger.classList.remove('open');
+        }
+
+        function togglePageOneStateDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const panel = document.getElementById('page-one-state-panel');
+            if (!panel) {
+                return;
+            }
+
+            if (panel.classList.contains('open')) {
+                closePageOneStateDropdown();
+            } else {
+                openPageOneStateDropdown();
+            }
+        }
+
+        function openFavoriteLibrary() {
+            activeSource = 'favorite';
+            document.querySelectorAll('.source-menu li').forEach(el => el.classList.remove('active'));
+            closePageOneStateDropdown();
+            renderSourceMaterials();
+        }
+
+        function syncPageOneModuleNavigation() {
+            if (favoriteCollectionEntryEl) {
+                favoriteCollectionEntryEl.classList.toggle('active', activeSource === 'favorite');
+            }
+
+            document.querySelectorAll('.source-menu li').forEach(el => {
+                const mappedSource = el.getAttribute('data-source') || '';
+                el.classList.toggle('active', mappedSource === activeSource);
+            });
+        }
+
+        function renderPageOneFilterOptions() {
+            const list = getPageOneSourceMaterials();
+            const subcategories = Array.from(new Set(list.map(item => item.sourceDetail)));
+            const platforms = Array.from(new Set(list.map(item => item.platform)));
+            const sourceLabels = Array.from(new Set(list.map(item => item.sourceLabel)));
+            const currentBusiness = businessFilterEl.value;
+            const currentSubcategory = subcategoryFilterEl.value;
+            const currentPlatform = platformFilterEl.value;
+            const currentSourceLabel = favoriteSourceFilterEl?.value || 'all';
+            const sortOptions = getPageOneSortOptions();
+
+            businessFilterEl.innerHTML = `
+                <option value="all">全部业务线</option>
+                <option value="TK线">TK线</option>
+                <option value="HH线">HH线</option>
+            `;
+            subcategoryFilterEl.innerHTML = `<option value="all">全部来源子类</option>${subcategories.map(item => `<option value="${item}">${item}</option>`).join('')}`;
+            platformFilterEl.innerHTML = `<option value="all">全部渠道</option>${platforms.map(item => `<option value="${item}">${item}</option>`).join('')}`;
+            if (pageOneSortFilterEl) {
+                pageOneSortFilterEl.innerHTML = sortOptions.map(item => `<option value="${item.value}">${item.label}</option>`).join('');
+                if (!sortOptions.some(item => item.value === pageOneSortMode)) {
+                    pageOneSortMode = 'default';
+                }
+                pageOneSortFilterEl.value = pageOneSortMode;
+            }
+
+            businessFilterEl.value = ['TK线', 'HH线'].includes(currentBusiness) ? currentBusiness : 'all';
+            subcategoryFilterEl.value = subcategories.includes(currentSubcategory) ? currentSubcategory : 'all';
+            platformFilterEl.value = platforms.includes(currentPlatform) ? currentPlatform : 'all';
+            if (favoriteSourceFilterEl) {
+                favoriteSourceFilterEl.innerHTML = `<option value="all">全部来源大类</option>${sourceLabels.map(item => `<option value="${item}">${item}</option>`).join('')}`;
+                favoriteSourceFilterEl.style.display = activeSource === 'favorite' ? 'inline-flex' : 'none';
+                favoriteSourceFilterEl.value = sourceLabels.includes(currentSourceLabel) ? currentSourceLabel : 'all';
+            }
+            syncPageOneStateButtons();
+            refreshPageOneStateTrigger();
+            syncPageOneModuleNavigation();
+        }
+
+        function setPageOneSort(value) {
+            pageOneSortMode = value || 'default';
+            renderSourceMaterials();
+        }
+
+        function setPageOneTriStateFilter(key, value) {
+            if (!Object.prototype.hasOwnProperty.call(pageOneStateFilters, key)) {
+                return;
+            }
+
+            pageOneStateFilters[key] = value;
+            syncPageOneStateButtons();
+            refreshPageOneStateTrigger();
+            renderSourceMaterials();
+        }
+
+        function parseMetricNumber(raw, label = '') {
+            if (raw === null || raw === undefined) {
+                return null;
+            }
+
+            const text = String(raw).trim();
+            if (!text) {
+                return null;
+            }
+
+            if (label === '热度') {
+                const heatRank = {
+                    '高热增长': 5,
+                    '持续上升': 4,
+                    '节点拉升': 4,
+                    '平稳': 3,
+                    '稳定': 3,
+                    '热点波动': 2,
+                    '待验证': 1,
+                    '低频': 0
+                };
+                return heatRank[text] ?? 0;
+            }
+
+            const normalized = text.replace(/,/g, '');
+            const match = normalized.match(/^(-?\d+(?:\.\d+)?)([KMkm%]?)/);
+            if (!match) {
+                const parsed = Number.parseFloat(normalized);
+                return Number.isNaN(parsed) ? null : parsed;
+            }
+
+            let value = Number.parseFloat(match[1]);
+            const unit = (match[2] || '').toUpperCase();
+            if (unit === 'K') {
+                value *= 1000;
+            } else if (unit === 'M') {
+                value *= 1000000;
+            }
+            return value;
+        }
+
+        function getMaterialMetricValue(material, label) {
+            return parseMetricNumber((material.metrics || []).find(item => item[0] === label)?.[1], label);
+        }
+
+        function sortPageOneMaterials(list) {
+            const items = list.map((item, index) => ({ item, index }));
+            const sortKey = pageOneSortMode;
+
+            const comparators = {
+                default: () => 0,
+                displayValue: (a, b) => (getMaterialMetricValue(b.item, '展示估值') || 0) - (getMaterialMetricValue(a.item, '展示估值') || 0),
+                deliveryDays: (a, b) => (getMaterialMetricValue(b.item, '投放天数') || 0) - (getMaterialMetricValue(a.item, '投放天数') || 0),
+                popularity: (a, b) => (getMaterialMetricValue(b.item, '人气值') || 0) - (getMaterialMetricValue(a.item, '人气值') || 0),
+                heat: (a, b) => (getMaterialMetricValue(b.item, '热度') || 0) - (getMaterialMetricValue(a.item, '热度') || 0),
+                cost: (a, b) => (getMaterialMetricValue(b.item, '消耗') || 0) - (getMaterialMetricValue(a.item, '消耗') || 0),
+                ctr: (a, b) => (getMaterialMetricValue(b.item, 'CTR') || 0) - (getMaterialMetricValue(a.item, 'CTR') || 0),
+                cvr: (a, b) => (getMaterialMetricValue(b.item, 'CVR') || 0) - (getMaterialMetricValue(a.item, 'CVR') || 0),
+                d0Cost: (a, b) => (getMaterialMetricValue(b.item, 'D0总转化成本') || 0) - (getMaterialMetricValue(a.item, 'D0总转化成本') || 0)
+            };
+
+            const comparator = comparators[sortKey] || comparators.default;
+            if (sortKey === 'default') {
+                return list;
+            }
+
+            return items.sort((a, b) => {
+                const result = comparator(a, b);
+                if (result !== 0) {
+                    return result;
+                }
+                return a.index - b.index;
+            }).map(entry => entry.item);
+        }
+
+        // ================= P1 交互 =================
+        function getActiveMaterials() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const business = document.getElementById('business-filter').value;
+            const subcategory = document.getElementById('subcategory-filter').value;
+            const platform = document.getElementById('platform-filter').value;
+            const sourceLabel = favoriteSourceFilterEl?.value || 'all';
+            const list = getPageOneSourceMaterials();
+
+            return sortPageOneMaterials(list.filter(material => {
+                const searchBase = material.title.toLowerCase();
+
+                if (query && !searchBase.includes(query)) {
+                    return false;
+                }
+
+                if (business !== 'all' && material.businessLine !== business) {
+                    return false;
+                }
+
+                const favoriteMatches = pageOneStateFilters.favorite;
+                const briefMatches = pageOneStateFilters.brief;
+                const scriptMatches = pageOneStateFilters.script;
+                if (favoriteMatches !== 'all' && (isFavorited(material.id) !== (favoriteMatches === 'include'))) {
+                    return false;
+                }
+
+                if (briefMatches !== 'all' && (hasAnyBrief(material.id) !== (briefMatches === 'include'))) {
+                    return false;
+                }
+
+                if (scriptMatches !== 'all' && (hasAnyScript(material.id) !== (scriptMatches === 'include'))) {
+                    return false;
+                }
+
+                if (subcategory !== 'all' && material.sourceDetail !== subcategory) {
+                    return false;
+                }
+
+                if (platform !== 'all' && material.platform !== platform) {
+                    return false;
+                }
+
+                if (activeSource === 'favorite' && !isFavorited(material.id)) {
+                    return false;
+                }
+
+                if (activeSource === 'favorite' && sourceLabel !== 'all' && material.sourceLabel !== sourceLabel) {
+                    return false;
+                }
+
+                return true;
+            }));
+        }
+
+        function getMaterialById(materialId) {
+            const groups = Object.values(sourceMaterials).flat();
+            return groups.find(item => item.id === materialId);
+        }
+
+        function getSelectedMaterials() {
+            return selectedMaterialIds.map(getMaterialById).filter(Boolean);
+        }
+
+        function isMaterialBatchSelected(materialId) {
+            return selectedMaterialIds.includes(materialId);
+        }
+
+        function updateBatchSelectionHint() {
+            if (!batchSelectionHintEl) {
+                return;
+            }
+
+            batchSelectionHintEl.innerText = `已选 ${selectedMaterialIds.length} 条视频`;
+        }
+
+        function updateAssetSelectionHint() {
+            if (!assetSelectionHintEl) {
+                return;
+            }
+
+            assetSelectionHintEl.innerText = `已选 ${selectedAssetIds.length} 条资产`;
+        }
+
+        function isAssetSelected(sharedAssetId) {
+            return selectedAssetIds.includes(sharedAssetId);
+        }
+
+        function toggleAssetSelection(sharedAssetId) {
+            if (!sharedAssetId) {
+                return;
+            }
+
+            if (isAssetSelected(sharedAssetId)) {
+                selectedAssetIds = selectedAssetIds.filter(id => id !== sharedAssetId);
+            } else {
+                selectedAssetIds = [...selectedAssetIds, sharedAssetId];
+            }
+
+            updateAssetSelectionHint();
+            renderAssetLibrary();
+        }
+
+        function clearAssetSelection() {
+            selectedAssetIds = [];
+            updateAssetSelectionHint();
+            renderAssetLibrary();
+            showToast('已清空资产多选');
+        }
+
+        function getDeliveredUserIds(sharedAssetId) {
+            return Array.from(new Set(deliveryState[sharedAssetId]?.userIds || []));
+        }
+
+        function getDeliveredUserNames(sharedAssetId) {
+            return getDeliveredUserIds(sharedAssetId)
+                .map(userId => mockUsers.find(user => user.id === userId)?.name)
+                .filter(Boolean);
+        }
+
+        function isAssetMentionedForCurrentViewer(sharedAssetId) {
+            return getDeliveredUserIds(sharedAssetId).includes(currentViewerUserId);
+        }
+
+        function toggleMaterialSelection(materialId) {
+            if (!materialId) {
+                return;
+            }
+
+            if (isMaterialBatchSelected(materialId)) {
+                selectedMaterialIds = selectedMaterialIds.filter(id => id !== materialId);
+            } else {
+                selectedMaterialIds = [...selectedMaterialIds, materialId];
+            }
+
+            if (selectedMaterialIds.length && !selectedMaterialIds.includes(selectedMaterialId)) {
+                selectedMaterialId = selectedMaterialIds[0];
+            }
+
+            updateBatchSelectionHint();
+            renderSourceMaterials();
+        }
+
+        function clearMaterialSelection() {
+            selectedMaterialIds = [];
+            updateBatchSelectionHint();
+            renderSourceMaterials();
+            showToast('已清空多选');
+        }
+
+        function reorderSelectionWithPrimary(primaryId, ids) {
+            const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+            const nextIds = uniqueIds.includes(primaryId) ? [primaryId, ...uniqueIds.filter(id => id !== primaryId)] : [primaryId, ...uniqueIds];
+            return nextIds.filter(Boolean);
+        }
+
+        function isFavorited(materialId) {
+            return Boolean(favoriteState[materialId]);
+        }
+
+        function updatePageNav(page) {
+            [1, 2, 3].forEach(index => {
+                const el = document.getElementById(`nav-step-${index}`);
+                if (!el) {
+                    return;
+                }
+
+                el.classList.remove('active', 'passed');
+                if (index === page) {
+                    el.classList.add('active');
+                } else if (page === 2 && index === 1) {
+                    el.classList.add('passed');
+                } else if (page === 3 && index < 3) {
+                    el.classList.add('passed');
+                }
+            });
+        }
+
+        function getAssetStore(assetType = 'brief') {
+            return assetType === 'script' ? scriptState : briefState;
+        }
+
+        function getAssetTypeLabel(assetType = 'brief') {
+            return assetType === 'script' ? '脚本' : 'brief';
+        }
+
+        function getAssetTypeByPart(partKey = activePart) {
+            return partDefinitions[partKey]?.assetType || 'brief';
+        }
+
+        function getMaterialAssets(materialId, assetType = 'brief') {
+            return getAssetStore(assetType)[materialId] || null;
+        }
+
+        function hasAnyAsset(materialId, assetType = 'brief') {
+            const assets = getMaterialAssets(materialId, assetType);
+            return Boolean(assets && Object.values(assets).some(list => Array.isArray(list) && list.length));
+        }
+
+        function hasAnyBrief(materialId) {
+            return hasAnyAsset(materialId, 'brief');
+        }
+
+        function hasAnyScript(materialId) {
+            return hasAnyAsset(materialId, 'script');
+        }
+
+        function getSavedAssetForMaterial(materialId, partKey = activePart, assetType = getAssetTypeByPart(partKey)) {
+            const assets = getMaterialAssets(materialId, assetType);
+            if (!assets) {
+                return null;
+            }
+
+            if (partKey && Array.isArray(assets[partKey]) && assets[partKey].length) {
+                return assets[partKey][0];
+            }
+
+            return Object.values(assets).find(list => Array.isArray(list) && list.length)?.[0] || null;
+        }
+
+        function refreshBriefEntryState() {
+            if (!activePart || !partDefinitions[activePart] || !partDetailReady) {
+                savedBrief = null;
+                viewAssetBtnEl.style.display = 'none';
+                addReferenceBtnEl.style.display = 'none';
+                linkScriptBtnEl.style.display = 'none';
+                return;
+            }
+
+            const assetType = getAssetTypeByPart(activePart);
+            savedBrief = getSavedAssetForMaterial(selectedMaterialId, activePart, assetType);
+            viewAssetBtnEl.innerText = `查看${getAssetTypeLabel(assetType)}`;
+            viewAssetBtnEl.style.display = getAssetList(selectedMaterialId, activePart, assetType).length ? 'inline-flex' : 'none';
+            linkScriptBtnEl.innerText = `关联资源库已有${getAssetTypeLabel(assetType)}`;
+            linkScriptBtnEl.style.display = getAvailableLinkableAssets(activePart, assetType).length ? 'inline-flex' : 'none';
+            addReferenceBtnEl.style.display = getAvailableAssetsForReference(activePart, assetType).some(entry => {
+                const allRelatedIds = new Set([
+                    ...(entry.linkedMaterialIds || []),
+                    ...(entry.referenceMaterialIds || [])
+                ]);
+                return !selectedMaterialIds.every(id => allRelatedIds.has(id));
+            }) ? 'inline-flex' : 'none';
+        }
+
+        function getAssetList(materialId, partKey, assetType = getAssetTypeByPart(partKey)) {
+            const assets = getMaterialAssets(materialId, assetType);
+            if (!assets || !Array.isArray(assets[partKey])) {
+                return [];
+            }
+
+            return assets[partKey];
+        }
+
+        function getAssetTotalCount(assetType = 'brief') {
+            const store = getAssetStore(assetType);
+            const keys = new Set();
+            Object.entries(store).forEach(([materialId, assetMap]) => {
+                Object.entries(assetMap || {}).forEach(([partKey, list]) => {
+                    (list || []).forEach((asset, index) => {
+                        keys.add(asset.sharedAssetId || `${assetType}-${materialId}-${partKey}-${asset.createdAt || index}`);
+                    });
+                });
+            });
+            return keys.size;
+        }
+
+        function getAssetMaterialCount(assetType = 'all') {
+            const materialIds = new Set();
+            const types = assetType === 'all' ? ['brief', 'script'] : [assetType];
+
+            types.forEach(type => {
+                const store = getAssetStore(type);
+                Object.keys(store).forEach(materialId => {
+                    if (hasAnyAsset(materialId, type)) {
+                        materialIds.add(materialId);
+                    }
+                });
+            });
+
+            return materialIds.size;
+        }
+
+        function renderAssetHubShortcutCounts() {
+            if (allHubCountEl) {
+                allHubCountEl.innerText = String(getAssetTotalCount('brief') + getAssetTotalCount('script'));
+            }
+            if (briefHubCountEl) {
+                briefHubCountEl.innerText = String(getAssetTotalCount('brief'));
+            }
+            if (scriptHubCountEl) {
+                scriptHubCountEl.innerText = String(getAssetTotalCount('script'));
+            }
+        }
+
+        function getAllAssetEntries() {
+            const grouped = new Map();
+
+            ['brief', 'script'].forEach(assetType => {
+                const store = getAssetStore(assetType);
+                Object.entries(store).forEach(([materialId, assetMap]) => {
+                    Object.entries(assetMap || {}).forEach(([partKey, list]) => {
+                        (list || []).forEach((asset, index) => {
+                            const key = asset.sharedAssetId || `${assetType}-${materialId}-${partKey}-${asset.createdAt || index}`;
+                            const linkedMaterialIds = getAssetLinkedMaterialIds(asset, materialId);
+                            const primaryMaterial = getMaterialById(linkedMaterialIds[0] || materialId) || getMaterialById(materialId);
+
+                            if (!grouped.has(key)) {
+                                grouped.set(key, {
+                                    ...asset,
+                                    assetType,
+                                    materialId: linkedMaterialIds[0] || materialId,
+                                    partKey,
+                                    linkedMaterialIds: [...linkedMaterialIds],
+                                    referenceMaterialIds: [...getAssetReferenceMaterialIds(asset)],
+                                    materialTitle: asset.displayName || primaryMaterial?.title || materialId,
+                                    sourceLabel: primaryMaterial?.sourceLabel || '',
+                                    sourceDetail: primaryMaterial?.sourceDetail || '',
+                                    platform: primaryMaterial?.platform || '',
+                                    business: primaryMaterial?.business || '',
+                                    orderIndex: index
+                                });
+                            } else {
+                                const existing = grouped.get(key);
+                                existing.linkedMaterialIds = Array.from(new Set([...(existing.linkedMaterialIds || []), ...linkedMaterialIds]));
+                                existing.referenceMaterialIds = Array.from(new Set([...(existing.referenceMaterialIds || []), ...getAssetReferenceMaterialIds(asset)]));
+                            }
+                        });
+                    });
+                });
+            });
+
+            return Array.from(grouped.values())
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
+
+        function formatAssetTime(timestamp) {
+            if (!timestamp) {
+                return '';
+            }
+
+            return new Date(timestamp).toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function openAssetHub(assetType = 'all') {
+            goToPage(3);
+            if (assetTypeFilterEl) {
+                assetTypeFilterEl.value = assetType;
+            }
+            if (assetModuleFilterEl) {
+                assetModuleFilterEl.value = 'all';
+            }
+            renderAssetLibrary();
+        }
+
+        function getAvailableScriptAssets(partKey = activePart) {
+            return getAllAssetEntries().filter(entry => entry.assetType === 'script' && entry.partKey === partKey);
+        }
+
+        function getAvailableLinkableAssets(partKey = activePart, assetType = getAssetTypeByPart(partKey)) {
+            return getAllAssetEntries().filter(entry => entry.assetType === assetType && entry.partKey === partKey);
+        }
+
+        function getAvailableAssetsForReference(partKey = activePart, assetType = getAssetTypeByPart(partKey)) {
+            return getAllAssetEntries().filter(entry => entry.assetType === assetType && entry.partKey === partKey);
+        }
+
+        function openLinkScriptModal(options = {}) {
+            const isViewerMode = Boolean(options.viewerMaterialId);
+            if (!isViewerMode && (!activePart || !partDefinitions[activePart])) {
+                return;
+            }
+
+            const assetType = options.assetType || getAssetTypeByPart(activePart);
+            const assetLabel = getAssetTypeLabel(assetType);
+            linkScriptModalContext = {
+                assetType,
+                partKey: options.partKey ?? (isViewerMode ? '' : activePart),
+                materialIds: options.materialIds || (isViewerMode ? [options.viewerMaterialId] : [...selectedMaterialIds]),
+                viewerMaterialId: options.viewerMaterialId || '',
+                search: ''
+            };
+            linkScriptTitleEl.innerText = `关联资源库已有${assetLabel}`;
+            linkScriptDescEl.innerText = isViewerMode
+                ? `把当前预览视频直接关联到资源库中的${assetLabel}，支持按名称、模块、来源搜索。`
+                : `把当前选中的视频直接关联到资源库里的已有${assetLabel}，避免重复生成。`;
+            if (linkScriptSearchInputEl) {
+                linkScriptSearchInputEl.value = '';
+            }
+            renderLinkScriptModalList();
+            linkScriptModalEl.classList.add('open');
+        }
+
+        function renderLinkScriptModalList() {
+            if (!linkScriptModalContext) {
+                return;
+            }
+
+            const assetType = linkScriptModalContext.assetType;
+            const assetLabel = getAssetTypeLabel(assetType);
+            const query = (linkScriptSearchInputEl?.value || '').trim().toLowerCase();
+            const assets = getAllAssetEntries().filter(entry => {
+                if (entry.assetType !== assetType) {
+                    return false;
+                }
+
+                if (linkScriptModalContext.partKey && entry.partKey !== linkScriptModalContext.partKey) {
+                    return false;
+                }
+
+                const linkedIds = entry.linkedMaterialIds || [];
+                if (linkScriptModalContext.materialIds.every(id => linkedIds.includes(id))) {
+                    return false;
+                }
+
+                const searchBase = [
+                    entry.materialTitle,
+                    entry.moduleLabel,
+                    entry.sourceLabel,
+                    entry.sourceDetail,
+                    entry.platform,
+                    ...(entry.textBlocks || []).map(block => `${block.label} ${block.value}`)
+                ].join(' ').toLowerCase();
+
+                if (query && !searchBase.includes(query)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            linkScriptBodyEl.innerHTML = assets.length ? assets.map(entry => `
+                <div class="link-script-item">
+                    <div class="link-script-item-head">
+                        <div>
+                            <div class="asset-badge-row">
+                                <span class="asset-pill ${entry.assetType}">${getAssetTypeLabel(entry.assetType)}</span>
+                                <span class="badge">${escapeHtml(entry.moduleLabel)}</span>
+                            </div>
+                            <h4 style="margin-top:10px;">${escapeHtml(entry.materialTitle)}</h4>
+                        </div>
+                        <button class="btn btn-primary" onclick="linkExistingAsset('${entry.sharedAssetId}', '${entry.partKey}', '${entry.assetType}', ${JSON.stringify(linkScriptModalContext.materialIds)})">关联这条${getAssetTypeLabel(entry.assetType)}</button>
+                    </div>
+                    <div class="linked-chip-row">
+                        ${(entry.linkedMaterialIds || []).map(id => {
+                            const material = getMaterialById(id);
+                            return material ? `<span class="linked-chip">${escapeHtml(material.title)}</span>` : '';
+                        }).join('')}
+                    </div>
+                    <div class="asset-snippet">
+                        <strong style="display:block; margin-bottom:8px;">${escapeHtml(entry.textBlocks[0]?.label || '内容摘要')}</strong>
+                        ${escapeHtml(entry.textBlocks[0]?.value || '暂无内容')}
+                    </div>
+                </div>
+            `).join('') : `
+                <div class="empty-state">
+                    <strong>当前没有可关联的已有${assetLabel}</strong>
+                    你可以先生成一条${assetLabel}，或调整搜索条件后再关联。
+                </div>
+            `;
+        }
+
+        function openReferenceVideoModal() {
+            const assetType = getAssetTypeByPart(activePart);
+            const assets = getAvailableAssetsForReference(activePart, assetType).filter(entry => {
+                const allRelatedIds = new Set([
+                    ...(entry.linkedMaterialIds || []),
+                    ...(entry.referenceMaterialIds || [])
+                ]);
+                return !selectedMaterialIds.every(id => allRelatedIds.has(id));
+            });
+
+            referenceVideoBodyEl.innerHTML = assets.length ? assets.map(entry => `
+                <div class="link-script-item">
+                    <div class="link-script-item-head">
+                        <div>
+                            <div class="asset-badge-row">
+                                <span class="asset-pill ${entry.assetType}">${getAssetTypeLabel(entry.assetType)}</span>
+                                <span class="badge">${escapeHtml(entry.moduleLabel)}</span>
+                            </div>
+                            <h4 style="margin-top:10px;">${escapeHtml(entry.materialTitle)}</h4>
+                        </div>
+                        <button class="btn btn-primary" onclick="addReferenceVideosToAsset('${entry.sharedAssetId}', '${entry.partKey}', '${entry.assetType}')">添加这批参考视频</button>
+                    </div>
+                    <div class="asset-subsection">
+                        <div class="asset-subsection-title">原视频</div>
+                        <div class="linked-chip-row">
+                            ${(entry.linkedMaterialIds || []).map(id => {
+                                const material = getMaterialById(id);
+                                return material ? `<span class="linked-chip">${escapeHtml(material.title)}</span>` : '';
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="asset-subsection">
+                        <div class="asset-subsection-title">参考视频</div>
+                        <div class="linked-chip-row">
+                            ${(entry.referenceMaterialIds || []).map(id => {
+                                const material = getMaterialById(id);
+                                return material ? `<span class="reference-chip">${escapeHtml(material.title)}</span>` : '';
+                            }).join('') || '<span class="selection-hint">暂未补充参考视频</span>'}
+                        </div>
+                    </div>
+                    <div class="asset-snippet">
+                        <strong style="display:block; margin-bottom:8px;">${escapeHtml(entry.textBlocks[0]?.label || '内容摘要')}</strong>
+                        ${escapeHtml(entry.textBlocks[0]?.value || '暂无内容')}
+                    </div>
+                </div>
+            `).join('') : `
+                <div class="empty-state">
+                    <strong>当前没有可补充参考视频的已有资产</strong>
+                    你可以先生成一条 ${getAssetTypeLabel(assetType)}，再把当前视频批次补进去作为参考视频。
+                </div>
+            `;
+
+            referenceVideoModalEl.classList.add('open');
+        }
+
+        function closeLinkScriptModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            linkScriptModalEl.classList.remove('open');
+            linkScriptModalContext = null;
+        }
+
+        function closeReferenceVideoModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            referenceVideoModalEl.classList.remove('open');
+        }
+
+        function linkExistingAsset(sharedAssetId, partKey, assetType, materialIds = null) {
+            const assetStore = getAssetStore(assetType);
+            const assets = [];
+            const targetMaterialIds = Array.isArray(materialIds) && materialIds.length ? materialIds : [...selectedMaterialIds];
+            Object.entries(assetStore).forEach(([materialId, assetMap]) => {
+                Object.entries(assetMap || {}).forEach(([storedPartKey, list]) => {
+                    (list || []).forEach(asset => {
+                        if (asset.sharedAssetId === sharedAssetId && storedPartKey === partKey) {
+                            assets.push({ materialId, asset });
+                        }
+                    });
+                });
+            });
+
+            if (!assets.length) {
+                showToast(`未找到可关联的${getAssetTypeLabel(assetType)}`);
+                return;
+            }
+
+            const baseAsset = assets[0].asset;
+            const linkedIds = Array.from(new Set([
+                ...assets.flatMap(item => item.asset.linkedMaterialIds || [item.materialId]),
+                ...targetMaterialIds
+            ]));
+
+            assets.forEach(item => {
+                item.asset.linkedMaterialIds = [...linkedIds];
+            });
+
+            targetMaterialIds.forEach(materialId => {
+                if (!assetStore[materialId]) {
+                    assetStore[materialId] = Object.create(null);
+                }
+                if (!Array.isArray(assetStore[materialId][partKey])) {
+                    assetStore[materialId][partKey] = [];
+                }
+
+                const exists = assetStore[materialId][partKey].some(asset => asset.sharedAssetId === sharedAssetId);
+                if (!exists) {
+                    const material = getMaterialById(materialId);
+                    assetStore[materialId][partKey].unshift({
+                        ...baseAsset,
+                        material: `${material?.title || materialId} [片段 ${partDefinitions[partKey]?.time || ''}]`,
+                        linkedMaterialIds: [...linkedIds]
+                    });
+                }
+            });
+
+            closeLinkScriptModal();
+            refreshBriefEntryState();
+            renderSourceMaterials();
+            renderAssetLibrary();
+
+            if (briefModalEl.classList.contains('open') && briefModalContext) {
+                renderSavedBrief();
+            }
+
+            showToast(`已关联到已有${getAssetTypeLabel(assetType)}`);
+        }
+
+        function addReferenceVideosToAsset(sharedAssetId, partKey, assetType) {
+            const store = getAssetStore(assetType);
+            const matchedAssets = [];
+
+            Object.entries(store).forEach(([materialId, assetMap]) => {
+                Object.entries(assetMap || {}).forEach(([storedPartKey, list]) => {
+                    (list || []).forEach(asset => {
+                        if (asset.sharedAssetId === sharedAssetId && storedPartKey === partKey) {
+                            matchedAssets.push({ materialId, asset });
+                        }
+                    });
+                });
+            });
+
+            if (!matchedAssets.length) {
+                showToast(`未找到可补充参考视频的${getAssetTypeLabel(assetType)}`);
+                return;
+            }
+
+            const referenceIds = Array.from(new Set([
+                ...matchedAssets.flatMap(item => getAssetReferenceMaterialIds(item.asset)),
+                ...selectedMaterialIds.filter(id => !getAssetLinkedMaterialIds(matchedAssets[0].asset, matchedAssets[0].materialId).includes(id))
+            ]));
+
+            matchedAssets.forEach(item => {
+                item.asset.referenceMaterialIds = [...referenceIds];
+            });
+
+            closeReferenceVideoModal();
+            renderSourceMaterials();
+            renderAssetLibrary();
+
+            if (briefModalEl.classList.contains('open') && briefModalContext) {
+                renderSavedBrief();
+            }
+
+            showToast(`已为${getAssetTypeLabel(assetType)}补充参考视频`);
+        }
+
+        function getBriefTotalCount(materialId) {
+            const briefs = getMaterialAssets(materialId, 'brief');
+            if (!briefs) {
+                return 0;
+            }
+
+            return Object.values(briefs).reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
+        }
+
+        function toggleFavorite(materialId) {
+            if (!materialId) {
+                return;
+            }
+
+            if (isFavorited(materialId)) {
+                delete favoriteState[materialId];
+            } else {
+                favoriteState[materialId] = true;
+            }
+
+            renderSourceMaterials();
+
+            if (viewerModalEl.classList.contains('open')) {
+                renderViewer();
+            }
+        }
+
+        function renderSourceMaterials() {
+            renderPageOneFilterOptions();
+            updateBatchSelectionHint();
+            renderAssetHubShortcutCounts();
+            if (favoriteSourceCountEl) {
+                favoriteSourceCountEl.innerText = String(getFavoriteSourceCount());
+            }
+            const visibleMaterials = getActiveMaterials();
+
+            if (!visibleMaterials.length) {
+                materialGridEl.innerHTML = `
+                    <div class="empty-state">
+                        <strong>${activeSource === 'favorite' ? '收藏资源库里还没有素材' : '当前筛选下没有可展示的素材'}</strong>
+                        ${activeSource === 'favorite'
+                            ? '你可以先在其他来源里收藏素材，再回到收藏资源库查看。'
+                            : '你可以切换供给来源，或清空关键词与筛选条件后继续浏览。'}
+                    </div>
+                `;
+                return;
+            }
+
+            materialGridEl.innerHTML = visibleMaterials.map(material => {
+                const selectedClass = isMaterialBatchSelected(material.id) ? 'selected' : '';
+                const favoriteClass = isFavorited(material.id) ? '<span class="badge badge-favorite">已收藏</span>' : '';
+                const briefClass = hasAnyBrief(material.id)
+                    ? `<button class="badge brief-badge-btn" onclick="openAssetModal('${material.id}', '', 'all', 'brief'); event.stopPropagation();">已生成brief</button>`
+                    : '';
+                const scriptClass = hasAnyScript(material.id)
+                    ? `<button class="badge brief-badge-btn" onclick="openAssetModal('${material.id}', '', 'all', 'script'); event.stopPropagation();">已生成脚本</button>`
+                    : '';
+                const referenceClass = renderReferenceStatusBadges(material.id);
+                const batchSelectBtn = `<button class="select-toggle-btn ${isMaterialBatchSelected(material.id) ? 'active' : ''}" onclick="toggleMaterialSelection('${material.id}'); event.stopPropagation();">${isMaterialBatchSelected(material.id) ? '取消勾选' : '加入多选'}</button>`;
+                const mediaNode = material.hasVideo
+                    ? `<video src="${material.videoSrc}" muted autoplay loop playsinline preload="metadata"></video>`
+                    : `<div class="thumb-fill" style="background:${material.accent};"></div>`;
+                const metricNode = (material.metrics || []).map(item => `
+                    <div>
+                        <span class="metric-label">${item[0]}</span>
+                        <span class="metric-value">${item[1]}</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <article class="video-card ${selectedClass}">
+                        <div class="video-thumb" onclick="openViewerById('${material.id}')">
+                            ${mediaNode}
+                            <div class="thumb-center">▶</div>
+                            <div class="thumb-overlay">
+                                <div class="thumb-badge-row">
+                                    <div class="thumb-badges">
+                                        <span class="thumb-badge">${material.sourceDetail}</span>
+                                    </div>
+                                </div>
+                                <div class="thumb-bottom">
+                                    <div>
+                                        <strong>${material.platform}</strong>
+                                        <span>点击卡片全屏预览</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="video-card-body">
+                            <div class="card-topline">
+                                <h3>${material.title}</h3>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                                    ${batchSelectBtn}
+                                    <span class="badge">${material.sourceLabel}</span>
+                                    ${favoriteClass}
+                                    ${briefClass}
+                                    ${scriptClass}
+                                    ${referenceClass}
+                                </div>
+                            </div>
+
+                            <div class="metric-grid">${metricNode}</div>
+
+                            <div class="card-actions">
+                                <button class="btn" onclick="toggleFavorite('${material.id}')">${isFavorited(material.id) ? '取消收藏' : '收藏'}</button>
+                                <button class="btn btn-primary" onclick="startDecompose('${material.id}')">
+                                    进入拆解
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function switchSource(type, element) {
+            activeSource = type;
+            document.querySelectorAll('.source-menu li').forEach(el => el.classList.remove('active'));
+            if (element) {
+                element.classList.add('active');
+            }
+            closePageOneStateDropdown();
+            renderSourceMaterials();
+        }
+
+        function startDecompose(materialId, closePreview = false, targetPart = null, relatedMaterialIds = null, openDetail = false) {
+            const material = getMaterialById(materialId);
+            if (!material) {
+                return;
+            }
+
+            selectedMaterialId = material.id;
+            selectedMaterialIds = reorderSelectionWithPrimary(material.id, relatedMaterialIds || [material.id]);
+            document.getElementById('selected-material-name').innerText = material.title;
+            activePart = targetPart;
+            partDetailReady = Boolean(targetPart && openDetail);
+            closeBriefModal();
+            closeLinkScriptModal();
+            closeReferenceVideoModal();
+            closeShareModal();
+            updateBatchSelectionHint();
+            renderSourceMaterials();
+            renderSelectedMaterialContext();
+            renderPartDetail();
+
+            if (closePreview) {
+                closeViewer();
+            }
+
+            goToPage(2);
+        }
+
+        function startBatchDecompose() {
+            const materials = getSelectedMaterials();
+            if (materials.length < 2) {
+                showToast('请至少勾选 2 条视频后再进入同一条拆解');
+                return;
+            }
+
+            startDecompose(materials[0].id, false, null, selectedMaterialIds, false);
+        }
+
+        function openViewerById(materialId) {
+            viewerMaterials = getActiveMaterials();
+            viewerIndex = viewerMaterials.findIndex(item => item.id === materialId);
+
+            if (viewerIndex === -1) {
+                viewerMaterials = getPageOneSourceMaterials();
+                viewerIndex = viewerMaterials.findIndex(item => item.id === materialId);
+            }
+
+            if (viewerIndex === -1) {
+                viewerMaterials = Object.values(sourceMaterials).flat();
+                viewerIndex = viewerMaterials.findIndex(item => item.id === materialId);
+            }
+
+            if (viewerIndex < 0) {
+                return;
+            }
+
+            renderViewer();
+            viewerModalEl.classList.add('open');
+            document.body.classList.add('viewer-open');
+        }
+
+        function closeViewer(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            viewerModalEl.classList.remove('open');
+            document.body.classList.remove('viewer-open');
+        }
+
+        function navigateViewer(step) {
+            if (!viewerMaterials.length) {
+                return;
+            }
+
+            viewerIndex = (viewerIndex + step + viewerMaterials.length) % viewerMaterials.length;
+            renderViewer();
+        }
+
+        function renderViewer() {
+            const material = viewerMaterials[viewerIndex];
+            const favorited = isFavorited(material.id);
+            const hasBrief = hasAnyBrief(material.id);
+            const hasScript = hasAnyScript(material.id);
+            const briefReferenceCount = getReferencedAssetEntriesForMaterial(material.id, 'brief').length;
+            const scriptReferenceCount = getReferencedAssetEntriesForMaterial(material.id, 'script').length;
+            const mediaNode = material.hasVideo
+                ? `<video src="${material.videoSrc}" controls autoplay playsinline></video>`
+                : `<div class="viewer-placeholder" style="background:${material.accent};">无本地视频内容<br><span style="font-size:16px; font-weight:400; opacity:0.88; margin-top:10px;">当前以色块占位模拟真实缩略图与全屏浏览体验</span></div>`;
+            const viewerMetrics = material.metrics || [];
+
+            viewerStageEl.innerHTML = mediaNode;
+            viewerPositionEl.innerHTML = `${viewerIndex + 1} / ${viewerMaterials.length}<br><span style="font-size:11px; color:#94a3b8;">上下切换</span>`;
+            viewerMetaEl.innerHTML = `
+                <h3>${material.title}</h3>
+                <div class="viewer-section-stack">
+                    <div class="viewer-meta-grid">
+                        <div class="viewer-meta-item">
+                            <span>来源平台</span>
+                            <strong>${material.platform}</strong>
+                        </div>
+                        <div class="viewer-meta-item">
+                            <span>来源子类</span>
+                            <strong>${material.sourceDetail}</strong>
+                        </div>
+                        <div class="viewer-meta-item">
+                            <span>绑定业务</span>
+                            <strong>${material.business}</strong>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="viewer-metric-title">数据表现</div>
+                        <div class="viewer-metric-grid">
+                            ${viewerMetrics.map((metric, idx) => `
+                                <div class="viewer-meta-item ${idx === viewerMetrics.length - 1 && viewerMetrics.length % 2 === 1 ? 'wide' : ''}">
+                                    <span>${metric[0]}</span>
+                                    <strong>${metric[1]}</strong>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                ${favorited ? '<div class="viewer-favorite-state">已收藏</div>' : ''}
+                </div>
+
+                <div class="viewer-actions">
+                    <button class="btn" onclick="closeViewer()">返回卡片流</button>
+                    <button class="btn" onclick="toggleFavorite('${material.id}')">${favorited ? '取消收藏' : '收藏'}</button>
+                    <button class="btn" onclick="openLinkScriptModal({ viewerMaterialId: '${material.id}', assetType: 'brief' })">关联brief</button>
+                    <button class="btn" onclick="openLinkScriptModal({ viewerMaterialId: '${material.id}', assetType: 'script' })">关联脚本</button>
+                    ${hasBrief ? `<button class="btn" onclick="openAssetModal('${material.id}', '', 'all', 'brief')">查看brief</button>` : ''}
+                    ${hasScript ? `<button class="btn" onclick="openAssetModal('${material.id}', '', 'all', 'script')">查看脚本</button>` : ''}
+                    ${briefReferenceCount ? `<button class="btn" onclick="openReferencedAssetModal('${material.id}', 'brief')">参考brief ${briefReferenceCount}</button>` : ''}
+                    ${scriptReferenceCount ? `<button class="btn" onclick="openReferencedAssetModal('${material.id}', 'script')">参考脚本 ${scriptReferenceCount}</button>` : ''}
+                    <button class="btn btn-primary" onclick="startDecompose('${material.id}', true)">用这条素材进入拆解</button>
+                </div>
+            `;
+        }
+
+        // ================= P2 交互 =================
+        function renderSelectedMaterialContext() {
+            const material = getMaterialById(selectedMaterialId) || getMaterialById('internal-1');
+            if (!material) {
+                return;
+            }
+            const batchMaterials = getSelectedMaterials();
+
+            document.getElementById('selected-material-name').innerText = material.title;
+            selectedMaterialContextEl.innerHTML = `
+                <span class="context-chip"><strong>来源</strong>${material.sourceLabel}</span>
+                <span class="context-chip"><strong>平台</strong>${material.platform}</span>
+                <span class="context-chip"><strong>来源子类</strong>${material.sourceDetail}</span>
+                <span class="context-chip"><strong>同批拆解</strong>${batchMaterials.length} 条视频</span>
+            `;
+            selectedMaterialListEl.innerHTML = batchMaterials.map(item => `
+                <button type="button" class="multi-context-chip ${item.id === selectedMaterialId ? 'active' : ''}" onclick="setCurrentDecomposeMaterial('${item.id}')">
+                    ${escapeHtml(item.title)}
+                    <span>${escapeHtml(item.sourceLabel)} / ${escapeHtml(item.platform)}</span>
+                </button>
+            `).join('');
+        }
+
+        function setCurrentDecomposeMaterial(materialId) {
+            if (!selectedMaterialIds.includes(materialId)) {
+                return;
+            }
+
+            selectedMaterialId = materialId;
+            renderSelectedMaterialContext();
+            renderPartDetail();
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getAssetLinkedMaterialIds(asset, fallbackMaterialId) {
+            const linkedIds = Array.isArray(asset?.linkedMaterialIds) && asset.linkedMaterialIds.length
+                ? asset.linkedMaterialIds
+                : [fallbackMaterialId].filter(Boolean);
+            return Array.from(new Set(linkedIds));
+        }
+
+        function getAssetReferenceMaterialIds(asset) {
+            return Array.from(new Set(Array.isArray(asset?.referenceMaterialIds) ? asset.referenceMaterialIds : []));
+        }
+
+        function getDefaultAssetName(partKey = activePart, materialId = selectedMaterialId, assetType = getAssetTypeByPart(partKey)) {
+            const material = getMaterialById(materialId);
+            const materialTitle = material?.title || '未命名素材';
+            const assetLabel = getAssetTypeLabel(assetType);
+            const timeText = formatAssetTime(Date.now()).replace(/\//g, '-').replace(/\s/g, '_').replace(/:/g, '-');
+            return `${materialTitle}_${assetLabel}_${timeText}`;
+        }
+
+        function ensurePartAssetName(partKey = activePart) {
+            if (!partKey || !partFormState[partKey]) {
+                return;
+            }
+
+            if (!partFormState[partKey].assetName) {
+                partFormState[partKey].assetName = getDefaultAssetName(partKey);
+            }
+        }
+
+        function getReferencedAssetEntriesForMaterial(materialId, assetType = 'all') {
+            const entries = getAllAssetEntries();
+            return entries.filter(entry => {
+                if (assetType !== 'all' && entry.assetType !== assetType) {
+                    return false;
+                }
+                return (entry.referenceMaterialIds || []).includes(materialId);
+            });
+        }
+
+        function renderReferenceStatusBadges(materialId) {
+            const briefRefs = getReferencedAssetEntriesForMaterial(materialId, 'brief').length;
+            const scriptRefs = getReferencedAssetEntriesForMaterial(materialId, 'script').length;
+            return `
+                ${briefRefs ? `<button class="badge brief-badge-btn" onclick="openReferencedAssetModal('${materialId}', 'brief'); event.stopPropagation();">参考brief ${briefRefs}</button>` : ''}
+                ${scriptRefs ? `<button class="badge brief-badge-btn" onclick="openReferencedAssetModal('${materialId}', 'script'); event.stopPropagation();">参考脚本 ${scriptRefs}</button>` : ''}
+            `;
+        }
+
+        function renderAssetPreviewCards(materialIds) {
+            const ids = Array.from(new Set((materialIds || []).filter(Boolean)));
+            return ids.map(id => {
+                const material = getMaterialById(id);
+                if (!material) {
+                    return '';
+                }
+
+                const mediaNode = material.hasVideo
+                    ? `<video src="${material.videoSrc}" muted autoplay loop playsinline preload="metadata"></video>`
+                    : `<div class="thumb-fill" style="background:${material.accent};"></div>`;
+
+                return `
+                    <button class="asset-preview-card" type="button" onclick="openViewerFromAsset('${id}')">
+                        <div class="mini-stage">
+                            ${mediaNode}
+                            <span>▶</span>
+                        </div>
+                        <div class="asset-preview-copy">
+                            <strong>${escapeHtml(material.title)}</strong>
+                            <span>${escapeHtml(material.sourceLabel)} / ${escapeHtml(material.platform)}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderAssetPreviewSections(linkedIds = [], referenceIds = [], targetEl = briefModalPreviewEl) {
+            const linkedHtml = renderAssetPreviewCards(linkedIds);
+            const referenceHtml = renderAssetPreviewCards(referenceIds);
+            const sections = [];
+
+            if (linkedHtml) {
+                sections.push(`
+                    <div class="asset-preview-section">
+                        <h4>原视频</h4>
+                        <div class="asset-preview-grid">${linkedHtml}</div>
+                    </div>
+                `);
+            }
+
+            if (referenceHtml) {
+                sections.push(`
+                    <div class="asset-preview-section">
+                        <h4>参考视频</h4>
+                        <div class="asset-preview-grid">${referenceHtml}</div>
+                    </div>
+                `);
+            }
+
+            targetEl.innerHTML = sections.join('');
+        }
+
+        function getAssetEntryBySharedId(sharedAssetId, assetType = '', partKey = '') {
+            return getAllAssetEntries().find(entry => {
+                if (entry.sharedAssetId !== sharedAssetId) {
+                    return false;
+                }
+                if (assetType && entry.assetType !== assetType) {
+                    return false;
+                }
+                if (partKey && entry.partKey !== partKey) {
+                    return false;
+                }
+                return true;
+            }) || null;
+        }
+
+        function getBriefEntries() {
+            return getAllAssetEntries()
+                .filter(entry => entry.assetType === 'brief')
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
+
+        function getBriefTemplateFields() {
+            const template = partDefinitions.structure;
+            return {
+                tagTitle: template.tagTitle,
+                tagGroups: template.tagGroups,
+                selectedTags: [...(template.defaultSelectedTags || [])],
+                textBlocks: (template.textFields || []).reduce((acc, field) => {
+                    acc[field.key] = field.defaultValue || '';
+                    return acc;
+                }, {})
+            };
+        }
+
+        function getDirectScriptDefaultName(briefEntry) {
+            const baseName = briefEntry?.displayName || briefEntry?.materialTitle || '未命名brief';
+            const timeText = formatAssetTime(Date.now()).replace(/\//g, '-').replace(/\s/g, '_').replace(/:/g, '-');
+            return `${baseName}_脚本_${timeText}`;
+        }
+
+        function renderShareUserOptions(selectedUserIds = []) {
+            return `
+                <div class="tag-options">
+                    ${mockUsers.filter(user => user.id !== currentOperatorId).map(user => `
+                        <button
+                            type="button"
+                            class="tag-option ${selectedUserIds.includes(user.id) ? 'active' : ''}"
+                            onclick="toggleShareUser('${user.id}')"
+                        >@${user.name}</button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openShareModal(sharedAssetId, assetType = 'brief', partKey = '') {
+            const entry = getAssetEntryBySharedId(sharedAssetId, assetType, partKey);
+            if (!entry) {
+                showToast('未找到可下发的资产');
+                return;
+            }
+
+            shareModalContext = {
+                mode: 'single',
+                assetIds: [sharedAssetId],
+                assetType,
+                partKey,
+                entries: [entry],
+                userIds: [...getDeliveredUserIds(sharedAssetId)]
+            };
+            renderShareModalContent();
+            shareModalEl.classList.add('open');
+        }
+
+        function openShareModalForSelected() {
+            if (!selectedAssetIds.length) {
+                showToast('请先选择要下发的资产');
+                return;
+            }
+
+            const entries = selectedAssetIds
+                .map(assetId => getAssetEntryBySharedId(assetId))
+                .filter(Boolean);
+            if (!entries.length) {
+                showToast('当前没有可下发的资产');
+                return;
+            }
+
+            shareModalContext = {
+                mode: 'batch',
+                assetIds: [...selectedAssetIds],
+                entries,
+                userIds: []
+            };
+            renderShareModalContent();
+            shareModalEl.classList.add('open');
+        }
+
+        function toggleShareUser(userId) {
+            if (!shareModalContext) {
+                return;
+            }
+
+            if (shareModalContext.userIds.includes(userId)) {
+                shareModalContext.userIds = shareModalContext.userIds.filter(id => id !== userId);
+            } else {
+                shareModalContext.userIds = [...shareModalContext.userIds, userId];
+            }
+
+            renderShareModalContent();
+        }
+
+        function renderShareModalContent() {
+            if (!shareModalContext) {
+                return;
+            }
+
+            if (shareModalContext.mode === 'batch') {
+                shareModalBodyEl.innerHTML = `
+                    <div class="brief-content-block">
+                        <h4>批量下发 ${shareModalContext.entries.length} 条资产</h4>
+                        <div class="brief-copy">下发后，接收人可以在资产库的 \`@我的内容\` 中查看这些 brief 或脚本。</div>
+                    </div>
+                    <div class="brief-content-block">
+                        <h4>选择接收人</h4>
+                        ${renderShareUserOptions(shareModalContext.userIds)}
+                    </div>
+                    <div class="brief-content-block">
+                        <h4>本次下发内容</h4>
+                        <div class="linked-chip-row">
+                            ${shareModalContext.entries.map(entry => `<span class="linked-chip">${escapeHtml(entry.materialTitle)}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="brief-entry-row" style="justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="confirmShareAssets()">确认下发</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const entry = shareModalContext.entries[0];
+            shareModalBodyEl.innerHTML = `
+                <div class="brief-content-block">
+                    <h4>${escapeHtml(entry.materialTitle)}</h4>
+                    <div class="brief-copy">${escapeHtml(entry.sourceLabel)} / ${escapeHtml(entry.sourceDetail)} / ${escapeHtml(entry.platform)}</div>
+                </div>
+                <div class="brief-content-block">
+                    <h4>选择接收人</h4>
+                    ${renderShareUserOptions(shareModalContext.userIds)}
+                </div>
+                <div class="brief-content-block">
+                    <h4>当前已下发</h4>
+                    <div class="linked-chip-row">
+                        ${getDeliveredUserNames(entry.sharedAssetId).length
+                            ? getDeliveredUserNames(entry.sharedAssetId).map(name => `<span class="reference-chip">@${escapeHtml(name)}</span>`).join('')
+                            : '<span class="selection-hint">当前还没有下发给其他人</span>'}
+                    </div>
+                </div>
+                <div class="brief-entry-row" style="justify-content:flex-end;">
+                    <button class="btn btn-primary" onclick="confirmShareAssets()">确认下发</button>
+                </div>
+            `;
+        }
+
+        function confirmShareAssets() {
+            if (!shareModalContext?.assetIds?.length) {
+                return;
+            }
+
+            if (!shareModalContext.userIds.length) {
+                showToast('请先选择接收人');
+                return;
+            }
+
+            const recipientCount = shareModalContext.userIds.length;
+
+            shareModalContext.assetIds.forEach(assetId => {
+                const existing = deliveryState[assetId] || { userIds: [], senderId: currentOperatorId, deliveredAt: Date.now() };
+                deliveryState[assetId] = {
+                    ...existing,
+                    senderId: currentOperatorId,
+                    deliveredAt: Date.now(),
+                    userIds: Array.from(new Set([...(existing.userIds || []), ...shareModalContext.userIds]))
+                };
+            });
+
+            if (shareModalContext.mode === 'batch') {
+                selectedAssetIds = [];
+                updateAssetSelectionHint();
+            }
+
+            renderAssetLibrary();
+            if (briefModalEl.classList.contains('open') && briefModalContext) {
+                renderSavedBrief();
+            }
+            closeShareModal();
+            showToast(`已下发给 ${recipientCount} 位成员`);
+        }
+
+        function closeShareModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            shareModalEl.classList.remove('open');
+            shareModalContext = null;
+        }
+
+        function openTranslationModal(partKey = activePart) {
+            const part = partDefinitions[partKey];
+            if (!part) {
+                return;
+            }
+
+            translationModalBodyEl.innerHTML = `
+                <div class="brief-content-block">
+                    <h4>原始口播</h4>
+                    <div class="brief-copy">${escapeHtml(part.subtitle || '当前没有可展示的口播内容。')}</div>
+                </div>
+                <div class="brief-content-block">
+                    <h4>翻译内容</h4>
+                    <div class="brief-copy">${escapeHtml(part.translation || '当前模块已是中文内容。')}</div>
+                </div>
+            `;
+            translationModalEl.classList.add('open');
+        }
+
+        function closeTranslationModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            translationModalEl.classList.remove('open');
+        }
+
+        function openDirectScriptModal() {
+            goToPage(3);
+
+            const briefs = getBriefEntries();
+            const selectedBrief = briefs[0] || null;
+            const template = partDefinitions.structure;
+            const textValues = (template.textFields || []).reduce((acc, field) => {
+                acc[field.key] = field.defaultValue || '';
+                return acc;
+            }, {});
+
+            directScriptModalContext = {
+                search: '',
+                briefSharedAssetId: selectedBrief?.sharedAssetId || '',
+                assetName: selectedBrief ? getDirectScriptDefaultName(selectedBrief) : '',
+                assetNameTouched: false,
+                selectedTags: [...(template.defaultSelectedTags || [])],
+                textValues
+            };
+
+            if (directScriptSearchInputEl) {
+                directScriptSearchInputEl.value = '';
+            }
+
+            renderDirectScriptModal();
+            directScriptModalEl.classList.add('open');
+        }
+
+        function selectDirectScriptBrief(sharedAssetId) {
+            if (!directScriptModalContext) {
+                return;
+            }
+
+            const selectedBrief = getAssetEntryBySharedId(sharedAssetId, 'brief');
+            if (!selectedBrief) {
+                return;
+            }
+
+            const previousBrief = getAssetEntryBySharedId(directScriptModalContext.briefSharedAssetId, 'brief');
+            directScriptModalContext.briefSharedAssetId = sharedAssetId;
+
+            if (!directScriptModalContext.assetNameTouched || !directScriptModalContext.assetName.trim() || directScriptModalContext.assetName === getDirectScriptDefaultName(previousBrief)) {
+                directScriptModalContext.assetName = getDirectScriptDefaultName(selectedBrief);
+            }
+
+            renderDirectScriptModal();
+        }
+
+        function updateDirectScriptDraft(field, value, markTouched = false) {
+            if (!directScriptModalContext) {
+                return;
+            }
+
+            if (field === 'assetName') {
+                directScriptModalContext.assetName = value;
+                if (markTouched) {
+                    directScriptModalContext.assetNameTouched = true;
+                }
+                return;
+            }
+
+            directScriptModalContext.textValues[field] = value;
+        }
+
+        function toggleDirectScriptTag(tagName) {
+            if (!directScriptModalContext) {
+                return;
+            }
+
+            if (directScriptModalContext.selectedTags.includes(tagName)) {
+                directScriptModalContext.selectedTags = directScriptModalContext.selectedTags.filter(tag => tag !== tagName);
+            } else {
+                directScriptModalContext.selectedTags = [...directScriptModalContext.selectedTags, tagName];
+            }
+
+            renderDirectScriptModal();
+        }
+
+        function renderDirectScriptModal() {
+            if (!directScriptModalContext) {
+                return;
+            }
+
+            const query = (directScriptSearchInputEl?.value || '').trim().toLowerCase();
+            const briefs = getBriefEntries().filter(entry => {
+                if (!query) {
+                    return true;
+                }
+
+                const sourceBrief = entry.sourceBriefSharedAssetId ? getAssetEntryBySharedId(entry.sourceBriefSharedAssetId, 'brief', entry.sourceBriefPartKey || '') : null;
+                const searchBase = [
+                    entry.materialTitle,
+                    entry.moduleLabel,
+                    entry.sourceLabel,
+                    entry.sourceDetail,
+                    entry.platform,
+                    sourceBrief?.materialTitle || '',
+                    ...(entry.linkedMaterialIds || []).map(id => getMaterialById(id)?.title || '')
+                ].join(' ').toLowerCase();
+                return searchBase.includes(query);
+            });
+
+            const selectedBrief = getAssetEntryBySharedId(directScriptModalContext.briefSharedAssetId, 'brief');
+            const selectedBriefPreviewId = 'direct-script-selected-preview';
+            const template = partDefinitions.structure;
+
+            directScriptModalBodyEl.innerHTML = `
+                <div class="script-create-panel">
+                    <div class="script-create-panel-head">
+                        <h4>可选 brief</h4>
+                        <div class="selection-hint">按名称搜索并选择一个 brief 作为来源</div>
+                    </div>
+                    <div class="script-create-list">
+                        ${briefs.length ? briefs.map(entry => `
+                            <div class="script-create-item ${entry.sharedAssetId === directScriptModalContext.briefSharedAssetId ? 'active' : ''}" onclick="selectDirectScriptBrief('${entry.sharedAssetId}')">
+                                <div class="asset-badge-row">
+                                    <span class="asset-pill brief">brief</span>
+                                    <span class="badge">${escapeHtml(entry.moduleLabel)}</span>
+                                </div>
+                                <h5>${escapeHtml(entry.materialTitle)}</h5>
+                                <p>${escapeHtml(entry.sourceLabel)} / ${escapeHtml(entry.sourceDetail)} / ${escapeHtml(entry.platform)}</p>
+                                <div class="linked-chip-row">
+                                    ${(entry.linkedMaterialIds || []).slice(0, 2).map(id => {
+                                        const material = getMaterialById(id);
+                                        return material ? `<span class="linked-chip">${escapeHtml(material.title)}</span>` : '';
+                                    }).join('')}
+                                    ${(entry.linkedMaterialIds || []).length > 2 ? `<span class="selection-hint">+${(entry.linkedMaterialIds || []).length - 2}</span>` : ''}
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <div class="script-create-empty">
+                                当前没有可选的 brief。请先在页面 2 生成 brief，再回来直接创建脚本。
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <div class="script-create-form">
+                    ${selectedBrief ? `
+                        <div class="script-create-selected">
+                            <div class="script-create-selected-head">
+                                <div>
+                                    <h4>${escapeHtml(selectedBrief.materialTitle)}</h4>
+                                    <p>${escapeHtml(selectedBrief.sourceLabel)} / ${escapeHtml(selectedBrief.sourceDetail)} / ${escapeHtml(selectedBrief.platform)}</p>
+                                </div>
+                                <div class="brief-entry-row" style="justify-content:flex-end;">
+                                    <button class="btn btn-ghost" onclick="openAssetModal('${selectedBrief.materialId}', '${selectedBrief.partKey}', 'all', 'brief')">查看关联brief</button>
+                                    <button class="btn" onclick="selectDirectScriptBrief('${selectedBrief.sharedAssetId}')">重新选中</button>
+                                </div>
+                            </div>
+                            <div id="${selectedBriefPreviewId}" class="asset-preview-section"></div>
+                        </div>
+
+                        <div class="brief-content-block">
+                            <h4>资产名称</h4>
+                            <input class="detail-input" type="text" placeholder="输入脚本名称" value="${escapeHtml(directScriptModalContext.assetName || '')}" oninput="updateDirectScriptDraft('assetName', this.value, true)">
+                        </div>
+
+                        <div class="brief-content-block">
+                            <h4>${template.tagTitle}</h4>
+                            <div class="tag-group-list">
+                                ${template.tagGroups.map(group => `
+                                    <div class="tag-group">
+                                        <div class="tag-group-title">${group[0]}</div>
+                                        <div class="tag-options">
+                                            ${group[1].map(tag => `
+                                                <button
+                                                    type="button"
+                                                    class="tag-option ${directScriptModalContext.selectedTags.includes(tag) ? 'active' : ''}"
+                                                    onclick="toggleDirectScriptTag('${tag}')"
+                                                >${tag}</button>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        ${template.textFields.map(field => `
+                            <div class="brief-content-block">
+                                <h4>${field.label}</h4>
+                                <textarea
+                                    class="detail-textarea"
+                                    placeholder="${field.placeholder}"
+                                    oninput="updateDirectScriptDraft('${field.key}', this.value)"
+                                >${escapeHtml(directScriptModalContext.textValues[field.key] || '')}</textarea>
+                            </div>
+                        `).join('')}
+
+                        <div class="script-create-footer">
+                            <button class="btn" onclick="closeDirectScriptModal()">取消</button>
+                            <button class="btn btn-primary" onclick="saveDirectScript()">创建脚本</button>
+                        </div>
+                    ` : `
+                        <div class="script-create-empty">
+                            请先选择一个 brief，系统会沿用“整体结构”脚本相同的字段来创建脚本。
+                        </div>
+                    `}
+                </div>
+            `;
+
+            if (selectedBrief) {
+                renderAssetPreviewSections(selectedBrief.linkedMaterialIds || [selectedBrief.materialId], [], document.getElementById(selectedBriefPreviewId));
+            }
+        }
+
+        function saveDirectScript() {
+            if (!directScriptModalContext?.briefSharedAssetId) {
+                showToast('请先选择关联 brief');
+                return;
+            }
+
+            const selectedBrief = getAssetEntryBySharedId(directScriptModalContext.briefSharedAssetId, 'brief');
+            if (!selectedBrief) {
+                showToast('未找到关联 brief');
+                return;
+            }
+
+            const sourceMaterialIds = Array.from(new Set((selectedBrief.linkedMaterialIds || [selectedBrief.materialId]).filter(Boolean)));
+            if (!sourceMaterialIds.length) {
+                showToast('所选 brief 没有可关联的视频');
+                return;
+            }
+
+            const part = partDefinitions.structure;
+            const assetStore = getAssetStore('script');
+            const sharedAssetId = `script-direct-${Date.now()}`;
+            const displayName = (directScriptModalContext.assetName || '').trim() || getDirectScriptDefaultName(selectedBrief);
+            const groupedTags = part.tagGroups.map(group => ({
+                name: group[0],
+                value: group[1].filter(tag => directScriptModalContext.selectedTags.includes(tag)).join(' / ') || '未选择'
+            }));
+            const textBlocks = (part.textFields || []).map(field => ({
+                label: field.label,
+                value: directScriptModalContext.textValues[field.key] || ''
+            }));
+            const createdAt = Date.now();
+
+            sourceMaterialIds.forEach(materialId => {
+                if (!assetStore[materialId]) {
+                    assetStore[materialId] = Object.create(null);
+                }
+                if (!Array.isArray(assetStore[materialId].structure)) {
+                    assetStore[materialId].structure = [];
+                }
+
+                const material = getMaterialById(materialId);
+                assetStore[materialId].structure.unshift({
+                    moduleLabel: part.label,
+                    partKey: 'structure',
+                    material: `${material?.title || materialId} [片段 ${part.time}]`,
+                    displayName,
+                    tagGroups: groupedTags,
+                    tagTitle: part.tagTitle,
+                    textBlocks,
+                    createdAt,
+                    sharedAssetId,
+                    linkedMaterialIds: [...sourceMaterialIds],
+                    referenceMaterialIds: [],
+                    sourceBriefSharedAssetId: selectedBrief.sharedAssetId,
+                    sourceBriefPartKey: selectedBrief.partKey,
+                    sourceBriefTitle: selectedBrief.materialTitle,
+                    directCreate: true
+                });
+            });
+
+            closeDirectScriptModal();
+            renderAssetLibrary();
+            renderSourceMaterials();
+            showToast('脚本已创建并关联 brief');
+        }
+
+        function closeDirectScriptModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            directScriptModalEl.classList.remove('open');
+            directScriptModalContext = null;
+            if (directScriptSearchInputEl) {
+                directScriptSearchInputEl.value = '';
+            }
+            if (directScriptModalBodyEl) {
+                directScriptModalBodyEl.innerHTML = '';
+            }
+        }
+
+        function deleteAsset(sharedAssetId, assetType = 'brief', partKey = '') {
+            const assetStore = getAssetStore(assetType);
+
+            Object.keys(assetStore).forEach(materialId => {
+                const assetMap = assetStore[materialId] || {};
+                Object.keys(assetMap).forEach(storedPartKey => {
+                    if (partKey && storedPartKey !== partKey) {
+                        return;
+                    }
+
+                    assetMap[storedPartKey] = (assetMap[storedPartKey] || []).filter(asset => asset.sharedAssetId !== sharedAssetId);
+                    if (!assetMap[storedPartKey].length) {
+                        delete assetMap[storedPartKey];
+                    }
+                });
+
+                if (!Object.keys(assetMap).length) {
+                    delete assetStore[materialId];
+                }
+            });
+
+            delete deliveryState[sharedAssetId];
+            selectedAssetIds = selectedAssetIds.filter(id => id !== sharedAssetId);
+            updateAssetSelectionHint();
+            refreshBriefEntryState();
+            renderSourceMaterials();
+            renderAssetLibrary();
+
+            if (briefModalEl.classList.contains('open') && briefModalContext) {
+                renderSavedBrief();
+            }
+
+            showToast(`已删除${getAssetTypeLabel(assetType)}`);
+        }
+
+        function openViewerFromAsset(materialId) {
+            viewerMaterials = Object.values(sourceMaterials).flat();
+            viewerIndex = viewerMaterials.findIndex(item => item.id === materialId);
+            if (viewerIndex < 0) {
+                return;
+            }
+
+            renderViewer();
+            viewerModalEl.classList.add('open');
+            document.body.classList.add('viewer-open');
+        }
+
+        function renderAssetRecord(asset, index, assetType = 'brief') {
+            const assetLabel = getAssetTypeLabel(assetType);
+            const sourceBrief = asset.assetType === 'script' && asset.sourceBriefSharedAssetId
+                ? getAssetEntryBySharedId(asset.sourceBriefSharedAssetId, 'brief', asset.sourceBriefPartKey || '')
+                : null;
+            const sourceBriefVideoIds = sourceBrief ? (sourceBrief.linkedMaterialIds || []) : [];
+            return `
+                <div class="brief-record">
+                    <div class="brief-record-head">
+                        <strong>${escapeHtml(asset.displayName || `${assetLabel} ${index + 1}`)}</strong>
+                        <div class="brief-record-actions">
+                            <span class="badge">${escapeHtml(asset.material)}</span>
+                            ${sourceBrief ? `<span class="badge gold">关联 brief</span>` : ''}
+                            <button class="btn btn-ghost" onclick="openShareModal('${asset.sharedAssetId}', '${assetType}', '${asset.partKey || activePart || ''}')">下发查看</button>
+                            <button class="btn btn-ghost" onclick="deleteAsset('${asset.sharedAssetId}', '${assetType}', '${asset.partKey || activePart || ''}')">删除</button>
+                        </div>
+                    </div>
+                    <div class="brief-content-stack">
+                        ${sourceBrief ? `
+                            <div class="brief-content-block">
+                                <h4>关联 brief</h4>
+                                <div class="brief-entry-row" style="justify-content:space-between;">
+                                    <div class="selection-hint">${escapeHtml(sourceBrief.materialTitle)}</div>
+                                    <button class="btn btn-ghost" onclick="openAssetModal('${sourceBrief.materialId}', '${sourceBrief.partKey}', 'all', 'brief')">查看关联brief</button>
+                                </div>
+                                <div class="asset-preview-section" style="margin-top:12px;">
+                                    <div class="asset-preview-grid">
+                                        ${renderAssetPreviewCards(sourceBriefVideoIds)}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="brief-content-block">
+                            <h4>${escapeHtml(asset.tagTitle || `${asset.moduleLabel}标签`)}</h4>
+                            <div class="brief-group-list">
+                                ${asset.tagGroups.map(group => `
+                                    <div class="brief-group-item">
+                                        <strong>${escapeHtml(group.name)}</strong>
+                                        <span>${escapeHtml(group.value)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ${asset.textBlocks.map(block => `
+                            <div class="brief-content-block">
+                                <h4>${escapeHtml(block.label)}</h4>
+                                <div class="brief-copy">${escapeHtml(block.value || '未填写')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSavedBrief() {
+            if (!briefModalContext) {
+                return;
+            }
+
+            if (briefModalContext.mode === 'reference') {
+                const entries = briefModalContext.entries || [];
+                const assetLabel = briefModalContext.assetType === 'all'
+                    ? '资产'
+                    : getAssetTypeLabel(briefModalContext.assetType || 'brief');
+                renderAssetPreviewSections([briefModalContext.materialId], []);
+                briefModalBodyEl.innerHTML = entries.length ? entries.map((asset, index) => renderAssetRecord(asset, index, asset.assetType)).join('') : `
+                    <div class="empty-state">
+                        <strong>当前视频还没有被作为参考视频使用</strong>
+                        你可以先把这条视频补充到已有 brief 或脚本里作为参考视频。
+                    </div>
+                `;
+                const titleEl = briefModalEl.querySelector('.brief-dialog-title h3');
+                const descEl = briefModalEl.querySelector('.brief-dialog-title p');
+                titleEl.innerText = `${getMaterialById(briefModalContext.materialId)?.title || '当前视频'} 的参考${assetLabel}`;
+                descEl.innerText = '这里展示这条视频当前被哪些 brief 或脚本作为参考视频引用。';
+                return;
+            }
+
+            const materialId = briefModalContext.materialId;
+            const material = getMaterialById(materialId);
+            const partKey = briefModalContext.partKey;
+            const scope = briefModalContext.scope;
+            const assetType = briefModalContext.assetType || 'brief';
+            const assetLabel = getAssetTypeLabel(assetType);
+
+            if (!material) {
+                return;
+            }
+
+            if (scope === 'all') {
+                const assets = getMaterialAssets(materialId, assetType);
+                const sections = Object.entries(assets || {}).filter(([, list]) => Array.isArray(list) && list.length);
+                const linkedIds = sections.length
+                    ? sections.flatMap(([, list]) => list.flatMap(asset => getAssetLinkedMaterialIds(asset, materialId)))
+                    : [materialId];
+                const referenceIds = sections.flatMap(([, list]) => list.flatMap(asset => getAssetReferenceMaterialIds(asset)));
+                renderAssetPreviewSections(linkedIds, referenceIds);
+                briefModalBodyEl.innerHTML = sections.length ? sections.map(([key, list]) => `
+                    <div class="brief-section">
+                        <div class="brief-section-title">${partDefinitions[key]?.label || key.toUpperCase()} ${assetLabel} · ${list.length} 条</div>
+                        ${list.map((asset, index) => renderAssetRecord(asset, index, assetType)).join('')}
+                    </div>
+                `).join('') : `<div class="empty-state"><strong>当前素材还没有${assetLabel}</strong>保存后可在这里统一查看各模块内容。</div>`;
+                return;
+            }
+
+            const list = getAssetList(materialId, partKey, assetType);
+            const linkedIds = list.flatMap(asset => getAssetLinkedMaterialIds(asset, materialId));
+            const referenceIds = list.flatMap(asset => getAssetReferenceMaterialIds(asset));
+            renderAssetPreviewSections(linkedIds, referenceIds);
+            briefModalBodyEl.innerHTML = list.length
+                ? list.map((asset, index) => renderAssetRecord(asset, index, assetType)).join('')
+                : `<div class="empty-state"><strong>当前模块还没有${assetLabel}</strong>生成后可在这里查看当前模块的保存内容。</div>`;
+        }
+
+        function openAssetModal(materialId = selectedMaterialId, partKey = activePart, scope = 'current', assetType = getAssetTypeByPart(partKey || activePart)) {
+            if (scope === 'all' && !hasAnyAsset(materialId, assetType)) {
+                return;
+            }
+
+            if (scope !== 'all' && !getAssetList(materialId, partKey, assetType).length) {
+                return;
+            }
+
+            briefModalContext = { materialId, partKey, scope, assetType };
+            renderSavedBrief();
+            const material = getMaterialById(materialId);
+            const titleEl = briefModalEl.querySelector('.brief-dialog-title h3');
+            const descEl = briefModalEl.querySelector('.brief-dialog-title p');
+            const assetLabel = getAssetTypeLabel(assetType);
+            if (scope === 'all') {
+                titleEl.innerText = `${material?.title || '当前素材'} 已保存${assetLabel}`;
+                descEl.innerText = `这里展示这条素材下所有模块的${assetLabel}。`;
+            } else {
+                titleEl.innerText = `${partDefinitions[partKey]?.label || ''} 已保存${assetLabel}`;
+                descEl.innerText = `这里展示当前素材、当前模块下已保存的${assetLabel}。`;
+            }
+
+            briefModalEl.classList.add('open');
+        }
+
+        function openReferencedAssetModal(materialId, assetType = 'all') {
+            const entries = getReferencedAssetEntriesForMaterial(materialId, assetType);
+            briefModalContext = {
+                mode: 'reference',
+                materialId,
+                assetType,
+                entries
+            };
+            renderSavedBrief();
+            briefModalEl.classList.add('open');
+        }
+
+        function closeBriefModal(evt) {
+            if (evt && evt.currentTarget && evt.target !== evt.currentTarget) {
+                return;
+            }
+
+            briefModalEl.classList.remove('open');
+            briefModalContext = null;
+            briefModalPreviewEl.innerHTML = '';
+        }
+
+        function renderAssetLibrary() {
+            if (!assetLibraryListEl) {
+                return;
+            }
+
+            renderAssetHubShortcutCounts();
+            updateAssetSelectionHint();
+            const entries = getAllAssetEntries();
+            const query = assetSearchInputEl.value.trim().toLowerCase();
+            const assetType = assetTypeFilterEl.value;
+            const moduleKey = assetModuleFilterEl.value;
+            const deliveryFilter = assetDeliveryFilterEl.value;
+
+            assetModuleFilterEl.innerHTML = `<option value="all">全部模块</option>${partOrder.map(key => `<option value="${key}">${partDefinitions[key].label}</option>`).join('')}`;
+            assetModuleFilterEl.value = partOrder.includes(moduleKey) ? moduleKey : 'all';
+            assetViewUserFilterEl.innerHTML = mockUsers.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+            assetViewUserFilterEl.value = mockUsers.some(user => user.id === currentViewerUserId) ? currentViewerUserId : mockUsers[0].id;
+            currentViewerUserId = assetViewUserFilterEl.value;
+
+            const visibleEntries = entries.filter(entry => {
+                const linkedTitles = (entry.linkedMaterialIds || []).map(id => getMaterialById(id)?.title || '').join(' ');
+                const referenceTitles = (entry.referenceMaterialIds || []).map(id => getMaterialById(id)?.title || '').join(' ');
+                const sourceBrief = entry.sourceBriefSharedAssetId ? getAssetEntryBySharedId(entry.sourceBriefSharedAssetId, 'brief', entry.sourceBriefPartKey || '') : null;
+                const searchBase = [
+                    entry.materialTitle,
+                    entry.moduleLabel,
+                    entry.sourceLabel,
+                    entry.sourceDetail,
+                    entry.platform,
+                    entry.business,
+                    sourceBrief?.materialTitle || '',
+                    linkedTitles,
+                    referenceTitles,
+                    ...(entry.tagGroups || []).map(group => `${group.name} ${group.value}`),
+                    ...(entry.textBlocks || []).map(block => `${block.label} ${block.value}`)
+                ].join(' ').toLowerCase();
+
+                if (assetType !== 'all' && entry.assetType !== assetType) {
+                    return false;
+                }
+
+                if (assetModuleFilterEl.value !== 'all' && entry.partKey !== assetModuleFilterEl.value) {
+                    return false;
+                }
+
+                const deliveredCount = getDeliveredUserIds(entry.sharedAssetId).length;
+                if (deliveryFilter === 'mentioned' && !isAssetMentionedForCurrentViewer(entry.sharedAssetId)) {
+                    return false;
+                }
+
+                if (deliveryFilter === 'delivered' && !deliveredCount) {
+                    return false;
+                }
+
+                if (deliveryFilter === 'undelivered' && deliveredCount) {
+                    return false;
+                }
+
+                if (query && !searchBase.includes(query)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            assetLibraryListEl.innerHTML = visibleEntries.length ? visibleEntries.map(entry => `
+                <article class="asset-card">
+                    <div class="asset-card-head">
+                        <div>
+                            <div class="asset-badge-row">
+                                <span class="asset-pill ${entry.assetType}">${getAssetTypeLabel(entry.assetType)}</span>
+                                <span class="badge">${entry.moduleLabel}</span>
+                                ${entry.sourceBriefSharedAssetId ? `<span class="badge gold">直接创建</span>` : ''}
+                                ${getDeliveredUserIds(entry.sharedAssetId).length ? `<span class="badge brief-badge-btn">已下发 ${getDeliveredUserIds(entry.sharedAssetId).length} 人</span>` : ''}
+                            </div>
+                            <h3 style="margin-top:10px;">${escapeHtml(entry.materialTitle)}</h3>
+                            ${entry.sourceBriefSharedAssetId ? `<div class="asset-meta-copy" style="margin-top:6px;">关联 brief：${escapeHtml((getAssetEntryBySharedId(entry.sourceBriefSharedAssetId, 'brief', entry.sourceBriefPartKey || '') || {}).materialTitle || '未找到')}</div>` : ''}
+                        </div>
+                        <span class="asset-time">${escapeHtml(formatAssetTime(entry.createdAt))}</span>
+                    </div>
+                    <div class="asset-meta-copy">${escapeHtml(entry.sourceLabel)} / ${escapeHtml(entry.sourceDetail)} / ${escapeHtml(entry.platform)}</div>
+                    <div class="asset-subsection">
+                        <div class="asset-subsection-title">原视频</div>
+                        <div class="linked-chip-row">
+                            ${(entry.linkedMaterialIds || []).map(id => {
+                                const material = getMaterialById(id);
+                                return material ? `<span class="linked-chip">${escapeHtml(material.title)}</span>` : '';
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="asset-snippet">
+                        <strong style="display:block; margin-bottom:8px;">${escapeHtml(entry.textBlocks[0]?.label || '内容摘要')}</strong>
+                        ${escapeHtml(entry.textBlocks[0]?.value || entry.tagGroups.map(group => group.value).join(' / ') || '暂无内容')}
+                    </div>
+                    ${getDeliveredUserNames(entry.sharedAssetId).length ? `
+                        <div class="asset-subsection">
+                            <div class="asset-subsection-title">@我的内容接收人</div>
+                            <div class="linked-chip-row">
+                                ${getDeliveredUserNames(entry.sharedAssetId).map(name => `<span class="reference-chip">@${escapeHtml(name)}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="asset-actions">
+                        <label class="asset-select-toggle ${isAssetSelected(entry.sharedAssetId) ? 'active' : ''}">
+                            <input type="checkbox" ${isAssetSelected(entry.sharedAssetId) ? 'checked' : ''} onchange="toggleAssetSelection('${entry.sharedAssetId}')">
+                            <span>多选下发</span>
+                        </label>
+                        <button class="btn" onclick="openAssetModal('${entry.materialId}', '${entry.partKey}', 'current', '${entry.assetType}')">查看${getAssetTypeLabel(entry.assetType)}</button>
+                        ${entry.sourceBriefSharedAssetId ? `<button class="btn" onclick="openAssetModal('${getAssetEntryBySharedId(entry.sourceBriefSharedAssetId, 'brief', entry.sourceBriefPartKey || '')?.materialId || entry.materialId}', '${getAssetEntryBySharedId(entry.sourceBriefSharedAssetId, 'brief', entry.sourceBriefPartKey || '')?.partKey || ''}', 'all', 'brief')">查看关联brief</button>` : ''}
+                        <button class="btn" onclick="openShareModal('${entry.sharedAssetId}', '${entry.assetType}', '${entry.partKey}')">下发查看</button>
+                        <button class="btn btn-primary" onclick='startDecompose("${entry.materialId}", false, "${entry.partKey}", ${JSON.stringify(entry.linkedMaterialIds || [entry.materialId])}, true)'>回到模块</button>
+                    </div>
+                </article>
+            `).join('') : `
+                <div class="empty-state" style="grid-column:1 / -1;">
+                    <strong>当前筛选下没有可查看的资产</strong>
+                    你可以调整资产类型、模块或关键词，继续查看已沉淀的 brief 与脚本。
+                </div>
+            `;
+        }
+
+        function showToast(message) {
+            toastEl.innerText = message;
+            toastEl.classList.add('visible');
+
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+            }
+
+            toastTimer = setTimeout(() => {
+                toastEl.classList.remove('visible');
+            }, 1800);
+        }
+
+        function selectPart(partKey) {
+            activePart = partKey;
+            partDetailReady = true;
+            ensurePartAssetName(partKey);
+            renderPartDetail();
+        }
+
+        function resetPartSelection() {
+            activePart = null;
+            partDetailReady = false;
+            renderPartDetail();
+        }
+
+        function togglePartTag(partKey, tagName) {
+            const state = partFormState[partKey];
+            if (!state) {
+                return;
+            }
+
+            if (state.selectedTags.includes(tagName)) {
+                state.selectedTags = state.selectedTags.filter(tag => tag !== tagName);
+            } else {
+                state.selectedTags = [...state.selectedTags, tagName];
+            }
+
+            renderPartDetail();
+        }
+
+        function updatePartText(partKey, field, value) {
+            if (!partFormState[partKey]) {
+                return;
+            }
+
+            partFormState[partKey][field] = value;
+        }
+
+        function renderProgressTrack() {
+            progressTrackEl.innerHTML = partOrder.map(key => {
+                const part = partDefinitions[key];
+                return `
+                    <button
+                        type="button"
+                        class="progress-segment ${key === activePart ? 'active' : ''}"
+                        style="flex:${part.weight}"
+                        title="${part.label} ${part.time}"
+                        onclick="selectPart('${key}')"
+                    ></button>
+                `;
+            }).join('');
+        }
+
+        function saveCurrentBrief() {
+            const state = partFormState[activePart];
+            const part = partDefinitions[activePart];
+            const materials = getSelectedMaterials();
+            if (!materials.length || !part || !state) {
+                return;
+            }
+
+            const assetType = part.assetType || 'brief';
+            const assetLabel = getAssetTypeLabel(assetType);
+            const assetStore = getAssetStore(assetType);
+            const batchMaterialIds = materials.map(item => item.id);
+            const sharedAssetId = `${assetType}-${activePart}-${Date.now()}`;
+            const displayName = (state.assetName || '').trim() || getDefaultAssetName(activePart, materials[0]?.id, assetType);
+
+            const groupedTags = part.tagGroups.map(group => ({
+                name: group[0],
+                value: group[1].filter(tag => state.selectedTags.includes(tag)).join(' / ') || '未选择'
+            }));
+            const textBlocks = (part.textFields || []).map(field => ({
+                label: field.label,
+                value: state[field.key] || ''
+            }));
+            const createdAt = Date.now();
+
+            materials.forEach(material => {
+                const brief = {
+                    moduleLabel: part.label,
+                    partKey: activePart,
+                    material: `${material.title} [片段 ${part.time}]`,
+                    displayName,
+                    tagGroups: groupedTags,
+                    tagTitle: part.tagTitle,
+                    textBlocks,
+                    createdAt,
+                    sharedAssetId,
+                    linkedMaterialIds: [...batchMaterialIds],
+                    referenceMaterialIds: []
+                };
+
+                if (!assetStore[material.id]) {
+                    assetStore[material.id] = Object.create(null);
+                }
+
+                if (!Array.isArray(assetStore[material.id][activePart])) {
+                    assetStore[material.id][activePart] = [];
+                }
+
+                assetStore[material.id][activePart].unshift(brief);
+                if (material.id === selectedMaterialId) {
+                    savedBrief = brief;
+                }
+            });
+
+            renderSavedBrief();
+            refreshBriefEntryState();
+            renderSourceMaterials();
+            renderAssetLibrary();
+
+            if (briefModalEl.classList.contains('open') && briefModalContext) {
+                renderSavedBrief();
+            }
+
+            showToast(`${assetLabel} 已生成并保存，已关联 ${materials.length} 条视频`);
+        }
+
+        function renderPartDetail() {
+            const part = partDefinitions[activePart];
+            const state = activePart ? partFormState[activePart] : null;
+            if (partPickerTitleEl) {
+                partPickerTitleEl.innerText = partDetailReady && part ? '填写拆解内容' : '请选择拆解模块';
+            }
+            if (partGridEl) {
+                partGridEl.style.display = partDetailReady && part ? 'none' : 'grid';
+            }
+
+            partOrder.forEach(key => {
+                const el = document.getElementById(`part-${key}`);
+                if (el) {
+                    el.classList.toggle('current', key === activePart);
+                }
+            });
+
+            renderProgressTrack();
+            refreshBriefEntryState();
+            if (!part || !partDetailReady) {
+                playerTagEl.innerText = '已载入素材预览';
+                playerSceneEl.innerText = '[ 请选择一个拆解模块，再继续填写对应内容 ]';
+                playerSubtitleEl.innerHTML = `<strong>实时语音转文字 (ASR):</strong><br>先选择要拆解的模块，再进入具体内容填写。`;
+                hookDetailPanelEl.innerHTML = `
+                    <div class="part-step-hint">
+                        <strong>先选模块，再填内容</strong>
+                        <span>第一步：从上方选择需要拆解的模块。</span>
+                        <span>第二步：进入该模块后，填写标签与说明内容，再保存为 brief 或脚本。</span>
+                    </div>
+                `;
+                return;
+            }
+
+            ensurePartAssetName(activePart);
+            playerTagEl.innerText = `正在播放: ${part.time}`;
+            playerSceneEl.innerText = part.scene;
+            playerSubtitleEl.innerHTML = `<strong>实时语音转文字 (ASR):</strong><br>${part.subtitle}`;
+            const actionLabel = getAssetTypeLabel(part.assetType || 'brief');
+            const translationAction = part.translation
+                ? `<button class="btn btn-ghost" onclick="openTranslationModal('${activePart}')">查看口播文案翻译</button>`
+                : '';
+
+            hookDetailPanelEl.innerHTML = `
+                <div class="detail-block-stack">
+                    <div class="brief-entry-row" style="justify-content:space-between;">
+                        <span class="selection-hint">当前模块：${escapeHtml(part.label)}</span>
+                        <div class="brief-entry-row" style="justify-content:flex-end;">
+                            ${translationAction}
+                            <button class="btn btn-ghost" onclick="resetPartSelection()">重新选择模块</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-block">
+                        <h4>资产名称</h4>
+                        <input
+                            class="detail-input"
+                            type="text"
+                            placeholder="输入资产名称"
+                            value="${escapeHtml(state.assetName || '')}"
+                            oninput="updatePartText('${activePart}', 'assetName', this.value)"
+                        >
+                    </div>
+
+                    <div class="detail-block">
+                        <h4>${part.tagTitle}</h4>
+                        <div class="tag-group-list">
+                            ${part.tagGroups.map(group => `
+                                <div class="tag-group">
+                                    <div class="tag-group-title">${group[0]}</div>
+                                    <div class="tag-options">
+                                        ${group[1].map(tag => `
+                                            <button
+                                                type="button"
+                                                class="tag-option ${state.selectedTags.includes(tag) ? 'active' : ''}"
+                                                onclick="togglePartTag('${activePart}', '${tag}')"
+                                            >${tag}</button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    ${(part.textFields || []).map(field => `
+                        <div class="detail-block">
+                            <h4>${field.label}</h4>
+                            <textarea
+                                class="detail-textarea"
+                                placeholder="${field.placeholder}"
+                                oninput="updatePartText('${activePart}', '${field.key}', this.value)"
+                            >${escapeHtml(state[field.key] || '')}</textarea>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="part-detail-footer" style="margin-top:16px; justify-content:flex-end;">
+                    <button class="btn btn-primary" style="padding: 12px 18px;" onclick="saveCurrentBrief()">确认生成${actionLabel}</button>
+                </div>
+            `;
+        }
+
+        viewerModalEl.addEventListener('wheel', function(evt) {
+            if (!viewerModalEl.classList.contains('open')) {
+                return;
+            }
+
+            evt.preventDefault();
+
+            if (Math.abs(evt.deltaY) < 12) {
+                return;
+            }
+
+            const now = Date.now();
+            if (now - viewerSwitchLock < 420) {
+                return;
+            }
+
+            navigateViewer(evt.deltaY > 0 ? 1 : -1);
+            viewerSwitchLock = now;
+        }, { passive: false });
+
+        viewerStageEl.addEventListener('touchstart', function(evt) {
+            touchStartY = evt.changedTouches[0].clientY;
+        }, { passive: true });
+
+        viewerStageEl.addEventListener('touchend', function(evt) {
+            const touchEndY = evt.changedTouches[0].clientY;
+            const diffY = touchStartY - touchEndY;
+
+            if (Math.abs(diffY) < 50) {
+                return;
+            }
+
+            navigateViewer(diffY > 0 ? 1 : -1);
+        });
+
+        document.addEventListener('keydown', function(evt) {
+            if (briefModalEl.classList.contains('open') && evt.key === 'Escape') {
+                closeBriefModal();
+                return;
+            }
+
+            if (shareModalEl.classList.contains('open') && evt.key === 'Escape') {
+                closeShareModal();
+                return;
+            }
+
+            if (linkScriptModalEl.classList.contains('open') && evt.key === 'Escape') {
+                closeLinkScriptModal();
+                return;
+            }
+
+            if (referenceVideoModalEl.classList.contains('open') && evt.key === 'Escape') {
+                closeReferenceVideoModal();
+                return;
+            }
+
+            if (directScriptModalEl.classList.contains('open') && evt.key === 'Escape') {
+                closeDirectScriptModal();
+                return;
+            }
+
+            if (!viewerModalEl.classList.contains('open')) {
+                return;
+            }
+
+            if (evt.key === 'Escape') {
+                closeViewer();
+            }
+
+            if (evt.key === 'ArrowDown') {
+                navigateViewer(1);
+            }
+
+            if (evt.key === 'ArrowUp') {
+                navigateViewer(-1);
+            }
+        });
+
+        document.addEventListener('click', function(evt) {
+            const dropdown = document.getElementById('page-one-state-dropdown');
+            if (!dropdown || dropdown.contains(evt.target)) {
+                return;
+            }
+
+            closePageOneStateDropdown();
+        });
+
+        renderSourceMaterials();
+        updateBatchSelectionHint();
+        renderSelectedMaterialContext();
+        renderPartDetail();
+    </script>
+</body>
+</html>
